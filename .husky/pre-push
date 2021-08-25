@@ -10,4 +10,7 @@ yarn eslint --fix .
 echo -e "\e[48;5;94m FORMATTING... \e[0m"
 yarn prettier --write .
 
+echo -e "\e[48;5;94m TESTING... \e[0m"
+yarn test
+
 echo -e "\e[44m DONE \e[0m"
