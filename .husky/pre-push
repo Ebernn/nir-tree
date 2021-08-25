@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo -e "\e[48;5;94m TYPE CHECK... \e[0m"
+yarn tsc --noEmit
+
+echo -e "\e[48;5;94m LINTING... \e[0m"
+yarn eslint --fix .
+
+echo -e "\e[48;5;94m FORMATTING... \e[0m"
+yarn prettier --write .
+
+echo -e "\e[44m DONE \e[0m"
