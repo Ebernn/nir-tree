@@ -1,13 +1,6 @@
-import { Tuple } from '../utils/types';
+import { Point, Polygon } from '../utils/types';
 
 // Definitions
-
-type Point<Dimensions extends number> = Tuple<number, Dimensions>;
-type Rectangle<Dimensions extends number> = [
-  Point<Dimensions>,
-  Point<Dimensions>
-];
-type Polygon<Dimensions extends number> = Rectangle<Dimensions>[];
 
 type RootNode<Dimensions extends number> =
   | { points: Point<Dimensions>[] }
