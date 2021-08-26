@@ -56,6 +56,25 @@ export const rectanglesAreDisjoint = <Dimensions extends number>(
 };
 
 /**
+ * Expands a rectangle to enclose a point.
+ * @param rectangle
+ * @param point
+ * @returns expanded rectangle containing the point
+ */
+export const rectangleEnclose = <Dimensions extends number>(
+  [point0, point1]: Rectangle<Dimensions>,
+  point: Point<Dimensions>
+): Rectangle<Dimensions> =>
+  [
+    point0.map((component, axis) =>
+      point[axis] < component ? point[axis] : component
+    ),
+    point1.map((component, axis) =>
+      point[axis] > component ? point[axis] : component
+    ),
+  ] as Rectangle<Dimensions>;
+
+/**
  * Returns a rectangle volume.
  * @param rectangle
  * @returns {number} volume
@@ -90,19 +109,17 @@ export const rectangleIntersection = <Dimensions extends number>(
   [A0, A1]: Rectangle<Dimensions>,
   [B0, B1]: Rectangle<Dimensions>
 ): Rectangle<Dimensions> =>
-  rectanglesAreDisjoint([A0, A1], [B0, B1])
-    ? [
-        new Array(A0.length).fill(0) as Point<Dimensions>,
-        new Array(A0.length).fill(0) as Point<Dimensions>,
-      ]
+  // make sure that the second point dominate the first one
+  (rectanglesAreDisjoint([A0, A1], [B0, B1])
+    ? [new Array(A0.length).fill(0), new Array(A0.length).fill(0)]
     : [
         new Array(A0.length)
           .fill(0)
-          .map((_, axis) => Math.max(A0[axis], B0[axis])) as Point<Dimensions>,
+          .map((_, axis) => Math.max(A0[axis], B0[axis])),
         new Array(A0.length)
           .fill(0)
-          .map((_, axis) => Math.min(A1[axis], B1[axis])) as Point<Dimensions>,
-      ];
+          .map((_, axis) => Math.min(A1[axis], B1[axis])),
+      ]) as Rectangle<Dimensions>;
 
 /**
  * Returns the intersection of two polygons.
