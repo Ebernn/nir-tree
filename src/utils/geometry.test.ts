@@ -126,7 +126,7 @@ describe('Geometry', () => {
       it('should deduce correclty their intersections', () => {
         expect(
           JSON.stringify(rectangleIntersection(rectangleA, rectangleC))
-        ).toBe('[[0,0],[0,0]]');
+        ).toBeUndefined();
       });
     });
   });
@@ -285,7 +285,7 @@ describe('Geometry', () => {
     describe('intersections', () => {
       it('should deduce correclty their intersections', () => {
         expect(JSON.stringify(polygonIntersection(polygon1, polygon2))).toBe(
-          '[[[3,2],[4,3]],[[4,2],[5,3]],[[4,3],[5,4]]]'
+          '[[[3,2],[3,3]],[[3,3],[3,4]],[[3,2],[4,3]],[[3,3],[4,3]],[[4,2],[5,3]],[[4,3],[5,4]]]'
         );
         expect(
           JSON.stringify(
@@ -302,6 +302,22 @@ describe('Geometry', () => {
             [
               [2, 0],
               [2, 5],
+            ],
+          ]).length
+        ).toBe(1);
+        expect(
+          polygonIntersection(polygon1, [
+            [
+              [2.5, 0],
+              [2.5, 5],
+            ],
+          ]).length
+        ).toBe(1);
+        expect(
+          polygonIntersection(polygon1, [
+            [
+              [1.5, 0],
+              [1.5, 5],
             ],
           ]).length
         ).toBe(0);

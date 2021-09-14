@@ -1,7 +1,42 @@
 import { Point, Polygon, Rectangle } from './types';
 
 /**
- * Check whether a rectangle includes a point or not.
+ * Definition 4. Check whether point0 dominates point1.
+ * @param point0
+ * @param point1
+ * @returns {boolean} true if point0 dominates point1, false otherwise
+ */
+export const dominates = <Dimensions extends number>(
+  point0: Point<Dimensions>,
+  point1: Point<Dimensions>
+): boolean => {
+  const dimensions = point0.length;
+  for (let axis = 0; axis < dimensions; axis++) {
+    if (point0[axis] < point1[axis]) return false;
+  }
+  return true;
+};
+
+/**
+ * Definition 10. Check whether a point is in the rectangle perimeter.
+ * @param rectangle
+ * @param point
+ * @returns {number | undefined} axis of alignement, undefined if the point is not in the perimeter
+ */
+export const inPerimeter = <Dimensions extends number>(
+  [point0, point1]: Rectangle<Dimensions>,
+  point: Point<Dimensions>
+): number | undefined => {
+  const dimensions = point0.length;
+  for (let axis = 0; axis < dimensions; axis++) {
+    if (point[axis] === point0[axis] || point[axis] === point1[axis])
+      return axis;
+  }
+  return undefined;
+};
+
+/**
+ * Definition 6. Check whether a rectangle includes a point or not.
  * @param rectangle
  * @param point
  * @returns {boolean} true if the rectangle includes the point, false otherwise
@@ -9,16 +44,10 @@ import { Point, Polygon, Rectangle } from './types';
 export const rectangleIncludesPoint = <Dimensions extends number>(
   [point0, point1]: Rectangle<Dimensions>,
   point: Point<Dimensions>
-): boolean => {
-  const dimensions = point.length;
-  for (let axis = 0; axis < dimensions; axis++) {
-    if (point0[axis] > point[axis] || point1[axis] < point[axis]) return false;
-  }
-  return true;
-};
+): boolean => dominates(point, point0) && dominates(point1, point);
 
 /**
- * Check whether a polygon includes a point or not.
+ * Definition 8. Check whether a polygon includes a point or not.
  * @param rectangles a polygon
  * @param point
  * @returns {boolean} true if the polygon includes the point, false otherwise
@@ -34,25 +63,28 @@ export const polygonIncludesPoint = <Dimensions extends number>(
 };
 
 /**
- * Check if two rectangles are disjoint a point or not.
+ * Definition 12. Check if two rectangles are disjoint.
  * @param rectangleA
  * @param rectangleB
- * @returns {boolean} true if their intersection is empty, false otherwise
+ * @returns {boolean} true if they are disjoint, false otherwise
  */
 export const rectanglesAreDisjoint = <Dimensions extends number>(
-  [pointA0, pointA1]: Rectangle<Dimensions>,
+  rectangleA: Rectangle<Dimensions>,
   rectangleB: Rectangle<Dimensions>
 ): boolean => {
-  const rectangleACorners: Point<Dimensions>[] = pointA1.map<Point<Dimensions>>(
-    (component1, i) =>
-      pointA0.map((component0, j) =>
-        i === j ? component1 : component0
-      ) as Point<Dimensions>
+  const intersection = rectangleIntersection(rectangleA, rectangleB);
+  if (!intersection) return true;
+  const [I0, I1] = intersection;
+  const axisAI0 = inPerimeter(rectangleA, I0);
+  const axisAI1 = inPerimeter(rectangleA, I1);
+  const axisBI0 = inPerimeter(rectangleB, I0);
+  const axisBI1 = inPerimeter(rectangleB, I1);
+  return (
+    axisAI0 !== undefined &&
+    axisAI0 === axisAI1 &&
+    axisAI0 === axisBI0 &&
+    axisAI0 === axisBI1
   );
-  for (let i = 0; i < rectangleACorners.length; i++) {
-    if (rectangleIncludesPoint(rectangleB, rectangleACorners[i])) return false;
-  }
-  return true;
 };
 
 /**
@@ -100,7 +132,7 @@ export const polygonVolume = <Dimensions extends number>(
     .reduce((accVolume, curVolume) => accVolume + curVolume);
 
 /**
- * Returns the intersection of two rectangles.
+ * Definition 9. Returns the intersection of two rectangles.
  * @param rectangleA
  * @param rectangleB
  * @returns the intersection of these two rectangles
@@ -108,21 +140,24 @@ export const polygonVolume = <Dimensions extends number>(
 export const rectangleIntersection = <Dimensions extends number>(
   [A0, A1]: Rectangle<Dimensions>,
   [B0, B1]: Rectangle<Dimensions>
-): Rectangle<Dimensions> =>
-  // make sure that the second point dominate the first one
-  (rectanglesAreDisjoint([A0, A1], [B0, B1])
-    ? [new Array(A0.length).fill(0), new Array(A0.length).fill(0)]
-    : [
-        new Array(A0.length)
-          .fill(0)
-          .map((_, axis) => Math.max(A0[axis], B0[axis])),
-        new Array(A0.length)
-          .fill(0)
-          .map((_, axis) => Math.min(A1[axis], B1[axis])),
-      ]) as Rectangle<Dimensions>;
+): Rectangle<Dimensions> | undefined =>
+  (([I0, I1]) => {
+    // make sure that the second point dominates the first one
+    const dimensions = I0.length;
+    for (let axis = 0; axis < dimensions; axis++) {
+      if (I1[axis] < I0[axis]) {
+        return undefined;
+      }
+    }
+    return [I0, I1];
+  })([
+    // apply the intersection definition
+    A0.map((component, axis) => Math.max(component, B0[axis])),
+    A1.map((component, axis) => Math.min(component, B1[axis])),
+  ]) as Rectangle<Dimensions>;
 
 /**
- * Returns the intersection of two polygons.
+ * Definition 11. Returns the intersection of two polygons.
  * @param polygonA
  * @param polygonB
  * @returns the intersection of these two polygons
@@ -140,8 +175,8 @@ export const polygonIntersection = <Dimensions extends number>(
     )
     // concat them all
     .reduce((acc, cur) => [...acc, ...cur])
-    // remove empty rectangles
-    .filter((rectangle) => rectangleVolume(rectangle) > 0);
+    // remove empty intersections
+    .filter((rectangle) => rectangle) as Polygon<Dimensions>;
 
 /**
  * Rectangle B is replaced with fragments of itself
