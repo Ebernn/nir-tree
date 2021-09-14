@@ -142,3 +142,44 @@ export const polygonIntersection = <Dimensions extends number>(
     .reduce((acc, cur) => [...acc, ...cur])
     // remove empty rectangles
     .filter((rectangle) => rectangleVolume(rectangle) > 0);
+
+/**
+ * Rectangle B is replaced with fragments of itself
+ * @param rectanglesA
+ * @param rectanglesB
+ * @returns fragmented rectangle B
+ */
+export const rectangleFragmentaion = <Dimensions extends number>(
+  [A0, A1]: Rectangle<Dimensions>,
+  [B0, B1]: Rectangle<Dimensions>
+): Polygon<Dimensions> => {
+  const dimensions = A0.length;
+  // our result, fragmented rectangle B
+  const fragments: Polygon<Dimensions> = [];
+  // remaining rectangle to be fragmented
+  const [r0, r1]: Rectangle<Dimensions> = [B0, B1];
+  // fragment the remaining rectangle
+  for (let axis = 0; axis < dimensions; axis++) {
+    if (r0[axis] < A0[axis] && r1[axis] > A0[axis])
+      fragments.push([
+        // move the remaining rectangle face to fit A0 on this axis
+        [...r0],
+        B1.map((B1component, B1axis) =>
+          B1axis === axis ? A0[axis] : B1component
+        ),
+      ] as Rectangle<Dimensions>);
+    if (r0[axis] < A1[axis] && r1[axis] > A1[axis])
+      fragments.push([
+        // move the remaining rectangle face to fit A1 on this axis
+        B0.map((B0component, B0axis) =>
+          B0axis === axis ? A1[axis] : B0component
+        ),
+        [...r1],
+      ] as Rectangle<Dimensions>);
+    // update the remaining rectangle
+    r0[axis] = Math.max(r0[axis], A0[axis]);
+    r1[axis] = Math.min(r1[axis], A1[axis]);
+  }
+  // remove empty rectangles
+  return fragments.filter((rectangle) => rectangleVolume(rectangle) > 0);
+};

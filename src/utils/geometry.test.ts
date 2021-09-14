@@ -6,6 +6,7 @@ import {
   polygonVolume,
   polygonIntersection,
   rectangleIntersection,
+  rectangleFragmentaion,
 } from './geometry';
 import { Point, Rectangle } from './types';
 
@@ -304,6 +305,45 @@ describe('Geometry', () => {
             ],
           ]).length
         ).toBe(0);
+      });
+    });
+
+    describe('fragmentation', () => {
+      describe('rectangle VS rectangle', () => {
+        it('should correctly replace rectangle with fragments of itself', () => {
+          expect(
+            JSON.stringify(
+              rectangleFragmentaion(
+                [
+                  [3, 1, 1],
+                  [5, 2, 2],
+                ],
+                [
+                  [1, 0, 0],
+                  [4, 3, 3],
+                ]
+              )
+            )
+          ).toBe(
+            '[[[1,0,0],[3,3,3]],[[3,0,0],[4,1,3]],[[3,2,0],[4,3,3]],[[3,1,0],[4,2,1]],[[3,1,2],[4,2,3]]]'
+          );
+          expect(
+            JSON.stringify(
+              rectangleFragmentaion(
+                [
+                  [3, 1, 2],
+                  [5, 2, 3],
+                ],
+                [
+                  [1, 0, 0],
+                  [4, 3, 3],
+                ]
+              )
+            )
+          ).toBe(
+            '[[[1,0,0],[3,3,3]],[[3,0,0],[4,1,3]],[[3,2,0],[4,3,3]],[[3,1,0],[4,2,2]]]'
+          );
+        });
       });
     });
   });
