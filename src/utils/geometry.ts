@@ -215,6 +215,5 @@ export const rectangleFragmentaion = <Dimensions extends number>(
     r0[axis] = Math.max(r0[axis], A0[axis]);
     r1[axis] = Math.min(r1[axis], A1[axis]);
   }
-  // remove empty rectangles
-  return fragments.filter((rectangle) => rectangleVolume(rectangle) > 0);
+  return fragments;
 };
