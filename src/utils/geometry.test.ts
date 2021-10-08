@@ -329,7 +329,7 @@ describe('Geometry', () => {
         it('should correctly replace rectangle with fragments of itself', () => {
           expect(
             JSON.stringify(
-              rectangleFragmentaion(
+              rectangleFragmentation(
                 [
                   [3, 1, 1],
                   [5, 2, 2],
@@ -345,7 +345,7 @@ describe('Geometry', () => {
           );
           expect(
             JSON.stringify(
-              rectangleFragmentaion(
+              rectangleFragmentation(
                 [
                   [3, 1, 2],
                   [5, 2, 3],
