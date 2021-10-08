@@ -184,7 +184,7 @@ export const polygonIntersection = <Dimensions extends number>(
  * @param rectanglesB
  * @returns fragmented rectangle B
  */
-export const rectangleFragmentaion = <Dimensions extends number>(
+export const rectangleFragmentation = <Dimensions extends number>(
   [A0, A1]: Rectangle<Dimensions>,
   [B0, B1]: Rectangle<Dimensions>
 ): Polygon<Dimensions> => {

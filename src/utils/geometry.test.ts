@@ -6,7 +6,7 @@ import {
   polygonVolume,
   polygonIntersection,
   rectangleIntersection,
-  rectangleFragmentaion,
+  rectangleFragmentation,
 } from './geometry';
 import { Point, Rectangle } from './types';
 
