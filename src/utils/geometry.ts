@@ -204,3 +204,21 @@ export const rectangleFragmentation = <Dimensions extends number>(
   }
   return fragments;
 };
+
+/**
+ * Definition 15. Polygon P is replaced with fragments of itself
+ * @param rectanglesP
+ * @param rectanglesPp
+ * @returns fragmented polygon P
+ */
+export const polygonFragmentation = <Dimensions extends number>(
+  rectanglesP: Polygon<Dimensions>,
+  rectanglesPp: Polygon<Dimensions>
+): Polygon<Dimensions> =>
+  rectanglesP
+    .map((rectangleP) =>
+      rectanglesPp.map((rectanglePp) =>
+        rectangleFragmentation(rectangleP, rectanglePp)
+      )
+    )
+    .flat(2);
