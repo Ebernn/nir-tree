@@ -174,7 +174,7 @@ export const polygonIntersection = <Dimensions extends number>(
         .map((rectangle2) => rectangleIntersection(rectangle1, rectangle2))
     )
     // concat them all
-    .reduce((acc, cur) => [...acc, ...cur])
+    .flat()
     // remove empty intersections
     .filter((rectangle) => rectangle) as Polygon<Dimensions>;
 
