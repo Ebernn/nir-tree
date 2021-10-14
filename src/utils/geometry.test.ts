@@ -9,6 +9,7 @@ import {
   rectangleFragmentation,
   pointInPerimeter,
   rectangleInPerimeter,
+  refine,
 } from './geometry';
 import { Point, Rectangle } from './types';
 
@@ -299,6 +300,142 @@ describe('Geometry', () => {
             )
           ).toBe(undefined);
         });
+      });
+    });
+
+    describe('refinement', () => {
+      it('should remove rectangles on edges', () => {
+        // edge
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1, 1],
+                [2, 1],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]]]');
+        // corner
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1, 1],
+                [1, 1],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]]]');
+      });
+      it('should simplify inclusions', () => {
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1.25, 1.25],
+                [1.75, 1.75],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]]]');
+      });
+      it('should merge rectangles into columns / rows', () => {
+        // column
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [2, 1.5],
+              ],
+              [
+                [1, 1.5],
+                [2, 2],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]]]');
+        // row
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [1.5, 2],
+              ],
+              [
+                [1.5, 1],
+                [2, 2],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]]]');
+        // mix
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [1.5, 1.5],
+              ],
+              [
+                [1.5, 1],
+                [2, 1.5],
+              ],
+              [
+                [1, 1.5],
+                [1.5, 2],
+              ],
+              [
+                [1.5, 1.5],
+                [2, 2],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]]]');
+      });
+      it('should not merge anything', () => {
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [2, 1.5],
+              ],
+              [
+                [2, 1.5],
+                [2, 2],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,1.5]],[[2,1.5],[2,2]]]');
+        expect(
+          JSON.stringify(
+            refine([
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [3, 1],
+                [4, 2],
+              ],
+            ])
+          )
+        ).toBe('[[[1,1],[2,2]],[[3,1],[4,2]]]');
       });
     });
   });

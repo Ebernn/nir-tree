@@ -64,6 +64,19 @@ export const rectangleIncludesPoint = <Dimensions extends number>(
 ): boolean => dominates(point, ll) && dominates(ur, point);
 
 /**
+ * Check wether rectangle A includes rectangle B or not.
+ * @param rectangleA
+ * @param rectangleB
+ * @returns {boolean} true if rectangle A includes rectangle B, false otherwise
+ */
+export const rectangleIncludesRectangle = <Dimensions extends number>(
+  rectangle: Rectangle<Dimensions>,
+  [ll, ur]: Rectangle<Dimensions>
+): boolean =>
+  rectangleIncludesPoint(rectangle, ll) &&
+  rectangleIncludesPoint(rectangle, ur);
+
+/**
  * Definition 8. Check whether a polygon includes a point or not.
  * @param rectangles a polygon
  * @param point
@@ -102,7 +115,7 @@ export const rectanglesAreDisjoint = <Dimensions extends number>(
  * @param point
  * @returns expanded rectangle containing the point
  */
-export const rectangleEnclose = <Dimensions extends number>(
+export const rectangleExpand = <Dimensions extends number>(
   [ll, ur]: Rectangle<Dimensions>,
   point: Point<Dimensions>
 ): Rectangle<Dimensions> =>
@@ -230,3 +243,88 @@ export const polygonFragmentation = <Dimensions extends number>(
       )
     )
     .flat(2);
+
+/**
+ * Simplify a polygon (remove useless rectangles, merge some of them).
+ * @param polygon
+ * @returns refined polygon
+ */
+export const refine = <Dimensions extends number>(
+  rectangles: Polygon<Dimensions>
+): Polygon<Dimensions> => {
+  // TODO : improve this part, quadratic complexity for now :S
+
+  /* First, when a rectangle is
+  also a line and lies on the perimeter of another rectangle (Figure
+  6a), the line rectangle is removed */
+  rectangles = rectangles.filter((rectangle) => {
+    for (const otherRectangle of rectangles) {
+      if (
+        rectangleInPerimeter(otherRectangle, rectangle) &&
+        rectangle !== otherRectangle
+      )
+        return false;
+    }
+    return true;
+  });
+
+  /* Second, when a rectangle is
+  enclosed by another rectangle (Figure 6b), the enclosed rectangle is
+  removed. */
+  rectangles = rectangles.filter((rectangle) => {
+    for (const otherRectangle of rectangles) {
+      if (
+        rectangleIncludesRectangle(otherRectangle, rectangle) &&
+        rectangle !== otherRectangle
+      )
+        return false;
+    }
+    return true;
+  });
+
+  /* Finally, when rectangles are organized into a column or
+  row of constant width or height and have positive intersection area
+  (Figure 6c), the row or column is replaced with a single rectangle. */
+
+  /**
+   * Merge rectangles forming columns or rows.
+   * @param rectangles rectangles to merge
+   * @returns rectangles with merged columns or rows
+   */
+  const mergeRectangles = (
+    rectangles: Polygon<Dimensions>
+  ): Polygon<Dimensions> => {
+    for (const rectangle of rectangles) {
+      const otherRectangles = rectangles.filter(
+        (otherRectangle) => otherRectangle !== rectangle
+      );
+      // check if you can create a column or row with rectangle and one of the other rectangles
+      for (const otherRectangle of otherRectangles) {
+        // check for positive intersection area
+        if (rectangleIntersection(rectangle, otherRectangle) !== undefined) {
+          const [rll, rur] = rectangle;
+          const [nrll, nrur] = otherRectangle;
+          // find the alignment axis
+          for (let axis = 0; axis < rll.length; axis++) {
+            if (rll[axis] === nrll[axis] && rur[axis] === nrur[axis]) {
+              otherRectangle[0] = nrll.map((comp, i) =>
+                Math.min(comp, rll[i])
+              ) as Point<Dimensions>;
+              otherRectangle[1] = nrur.map((comp, i) =>
+                Math.max(comp, rur[i])
+              ) as Point<Dimensions>;
+              // we have to check again for merging potential new columns or rows
+              return mergeRectangles(otherRectangles);
+            }
+          }
+        }
+      }
+    }
+
+    return rectangles;
+  };
+
+  rectangles = mergeRectangles(rectangles);
+
+  return rectangles;
+};
