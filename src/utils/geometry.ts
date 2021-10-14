@@ -131,19 +131,12 @@ export const rectangleIntersection = <Dimensions extends number>(
   [llA, urA]: Rectangle<Dimensions>,
   [llB, urB]: Rectangle<Dimensions>
 ): Rectangle<Dimensions> | undefined =>
-  (([ll, ur]) => {
-    // make sure that the second point dominates the first one
-    const dimensions = ll.length;
-    for (let axis = 0; axis < dimensions; axis++) {
-      if (ur[axis] < ll[axis]) {
-        return undefined;
-      }
-    }
-    return [ll, ur];
-  })([
+  (([ll, ur]: Rectangle<Dimensions>) =>
+    // make sure that ur dominates ll
+    dominates(ur, ll) ? [ll, ur] : undefined)([
     // apply the intersection definition
-    llA.map((comp, axis) => Math.max(comp, llB[axis])),
-    urA.map((comp, axis) => Math.min(comp, urB[axis])),
+    llA.map((comp, axis) => Math.max(comp, llB[axis])) as Point<Dimensions>,
+    urA.map((comp, axis) => Math.min(comp, urB[axis])) as Point<Dimensions>,
   ]) as Rectangle<Dimensions>;
 
 /**
