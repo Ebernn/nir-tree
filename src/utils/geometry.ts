@@ -23,15 +23,33 @@ export const dominates = <Dimensions extends number>(
  * @param point
  * @returns {number | undefined} axis of alignement, undefined if the point is not in the perimeter
  */
-export const inPerimeter = <Dimensions extends number>(
+export const pointInPerimeter = <Dimensions extends number>(
   [ll, ur]: Rectangle<Dimensions>,
   point: Point<Dimensions>
 ): number | undefined => {
   const dimensions = ll.length;
   for (let axis = 0; axis < dimensions; axis++) {
-    if (point[axis] === ll[axis] || point[axis] === ur[axis]) return axis;
+    if (rectangleIncludesPoint([ll, ur], point)) {
+      if (point[axis] === ll[axis]) return axis;
+      if (point[axis] === ur[axis]) return axis + dimensions; // to distinguish the sides
+    }
   }
   return undefined;
+};
+
+/**
+ * Check whether rectangle B is in the perimeter of rectangle A.
+ * @param rectangleA
+ * @param rectangleB
+ * @returns {number | undefined} axis of alignement, undefined if rectangle B is not in the perimeter of rectangle A
+ */
+export const rectangleInPerimeter = <Dimensions extends number>(
+  rectangle: Rectangle<Dimensions>,
+  [ll, ur]: Rectangle<Dimensions>
+): number | undefined => {
+  const perll = pointInPerimeter(rectangle, ll);
+  const perur = pointInPerimeter(rectangle, ur);
+  return perll === perur ? perll : undefined;
 };
 
 /**
@@ -73,12 +91,9 @@ export const rectanglesAreDisjoint = <Dimensions extends number>(
 ): boolean => {
   const intersection = rectangleIntersection(rectangleA, rectangleB);
   if (!intersection) return true;
-  const [ll, ur] = intersection;
-  const llA = inPerimeter(rectangleA, ll);
-  const urA = inPerimeter(rectangleA, ur);
-  const llB = inPerimeter(rectangleB, ll);
-  const urB = inPerimeter(rectangleB, ur);
-  return llA !== undefined && llA === urA && llA === llB && llA === urB;
+  const perA = rectangleInPerimeter(rectangleA, intersection);
+  const perB = rectangleInPerimeter(rectangleB, intersection);
+  return perA !== undefined && perA === perB;
 };
 
 /**

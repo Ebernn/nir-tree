@@ -7,6 +7,8 @@ import {
   polygonIntersection,
   rectangleIntersection,
   rectangleFragmentation,
+  pointInPerimeter,
+  rectangleInPerimeter,
 } from './geometry';
 import { Point, Rectangle } from './types';
 
@@ -127,6 +129,176 @@ describe('Geometry', () => {
         expect(
           JSON.stringify(rectangleIntersection(rectangleA, rectangleC))
         ).toBeUndefined();
+      });
+    });
+
+    describe('perimeter', () => {
+      describe('point', () => {
+        it('should be in perimeter', () => {
+          // edge
+          expect(
+            pointInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [1.5, 1]
+            )
+          ).toBe(1);
+          // corner
+          expect(
+            pointInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [1, 1]
+            )
+          ).toBe(0);
+        });
+        it('should NOT be in the perimeter', () => {
+          // center
+          expect(
+            pointInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [1.5, 1.5]
+            )
+          ).toBe(undefined);
+          // outside (but aligned on the first axis)
+          expect(
+            pointInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [0.5, 1]
+            )
+          ).toBe(undefined);
+        });
+      });
+      describe('rectangle', () => {
+        it('should be in perimeter', () => {
+          // edge
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1.25, 1],
+                [1.75, 1],
+              ]
+            )
+          ).toBe(1);
+          // corner
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1, 1],
+                [1, 1],
+              ]
+            )
+          ).toBe(0);
+          // line
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [1, 2],
+              ],
+              [
+                [1, 1.25],
+                [1, 1.75],
+              ]
+            )
+          ).toBe(0);
+          // line (itself)
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [1, 2],
+              ],
+              [
+                [1, 1],
+                [1, 2],
+              ]
+            )
+          ).toBe(0);
+        });
+        it('should NOT be in perimeter', () => {
+          // center
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1.25, 1.25],
+                [1.75, 1.75],
+              ]
+            )
+          ).toBe(undefined);
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [1, 1],
+                [2, 2],
+              ]
+            )
+          ).toBe(undefined);
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [0.5, 0.5],
+                [2.5, 2.5],
+              ]
+            )
+          ).toBe(undefined);
+          // shifted
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [2, 1],
+                [3, 2],
+              ]
+            )
+          ).toBe(undefined);
+          // outside (but aligned on the first axis)
+          expect(
+            rectangleInPerimeter(
+              [
+                [1, 1],
+                [2, 2],
+              ],
+              [
+                [0.5, 1],
+                [2.5, 1],
+              ]
+            )
+          ).toBe(undefined);
+        });
       });
     });
   });
