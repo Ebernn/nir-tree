@@ -331,12 +331,12 @@ describe('Geometry', () => {
             JSON.stringify(
               rectangleFragmentation(
                 [
-                  [3, 1, 1],
-                  [5, 2, 2],
-                ],
-                [
                   [1, 0, 0],
                   [4, 3, 3],
+                ],
+                [
+                  [3, 1, 1],
+                  [5, 2, 2],
                 ]
               )
             )
@@ -347,12 +347,12 @@ describe('Geometry', () => {
             JSON.stringify(
               rectangleFragmentation(
                 [
-                  [3, 1, 2],
-                  [5, 2, 3],
-                ],
-                [
                   [1, 0, 0],
                   [4, 3, 3],
+                ],
+                [
+                  [3, 1, 2],
+                  [5, 2, 3],
                 ]
               )
             )
