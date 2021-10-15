@@ -110,6 +110,24 @@ export const rectanglesAreDisjoint = <Dimensions extends number>(
 };
 
 /**
+ * Definition 13. Check if two polygons are disjoint.
+ * @param polygonA
+ * @param polygonB
+ * @returns {boolean} true if they are disjoint, false otherwise
+ */
+export const polygonsAreDisjoint = <Dimensions extends number>(
+  rectanglesA: Polygon<Dimensions>,
+  rectanglesB: Polygon<Dimensions>
+): boolean => {
+  for (const rectangleA of rectanglesA) {
+    for (const rectangleB of rectanglesB) {
+      if (!rectanglesAreDisjoint(rectangleA, rectangleB)) return false;
+    }
+  }
+  return true;
+};
+
+/**
  * Expands a rectangle to enclose a point.
  * @param rectangle
  * @param point
