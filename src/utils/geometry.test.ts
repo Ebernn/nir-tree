@@ -10,6 +10,7 @@ import {
   pointInPerimeter,
   rectangleInPerimeter,
   refine,
+  polygonExpand,
 } from './geometry';
 import { Point, Rectangle } from './types';
 
@@ -683,6 +684,28 @@ describe('Geometry', () => {
         expect(
           JSON.stringify(refine(polygonIntersection(polygon1, polygon2)))
         ).toBe('[[[3,3],[3,4]],[[3,2],[5,3]],[[4,3],[5,4]]]');
+      });
+      it('should expand a polygon to enclose a point minimizing additional area', () => {
+        expect(JSON.stringify(polygonExpand(polygon1, [5, 5]))).toBe(
+          JSON.stringify([
+            rectangle1A,
+            rectangle1B,
+            [
+              [4, 2],
+              [5, 5],
+            ],
+          ])
+        );
+        expect(JSON.stringify(polygonExpand(polygon1, [3.9, 4]))).toBe(
+          JSON.stringify([
+            rectangle1A,
+            rectangle1B,
+            [
+              [3.9, 2],
+              [5, 4],
+            ],
+          ])
+        );
       });
     });
   });

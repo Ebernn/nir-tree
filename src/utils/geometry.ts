@@ -125,6 +125,33 @@ export const rectangleExpand = <Dimensions extends number>(
   ] as Rectangle<Dimensions>;
 
 /**
+ * Expands a polygon to enclose a point (choosing the rectangle requiring the least additional area to enclose it).
+ * @param polygon
+ * @param point
+ * @returns expanded polygon containing the point
+ */
+export const polygonExpand = <Dimensions extends number>(
+  rectangles: Polygon<Dimensions>,
+  point: Point<Dimensions>
+): Polygon<Dimensions> => {
+  const [minIndex, minExpandedRectangle] = rectangles.reduce(
+    ([minIndex, minExpandedRectangle, minAddVolume], rectangle, index) => {
+      const expandedRectangle = rectangleExpand(rectangle, point);
+      const addVolume =
+        rectangleVolume(expandedRectangle) - rectangleVolume(rectangle);
+      return addVolume < minAddVolume
+        ? [index, expandedRectangle, addVolume]
+        : [minIndex, minExpandedRectangle, minAddVolume];
+    },
+    [-1, rectangles[0], Number.POSITIVE_INFINITY]
+  );
+  if (minIndex < 0) throw new Error('Could not expand empty polygons.');
+  return rectangles.map((rectangle, index) =>
+    index === minIndex ? minExpandedRectangle : rectangle
+  );
+};
+
+/**
  * Returns a rectangle volume.
  * @param rectangle
  * @returns {number} volume
