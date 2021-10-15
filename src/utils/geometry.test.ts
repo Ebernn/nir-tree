@@ -11,6 +11,7 @@ import {
   rectangleInPerimeter,
   refine,
   polygonExpand,
+  polygonsAreDisjoint,
 } from './geometry';
 import { Point, Rectangle } from './types';
 
@@ -155,7 +156,7 @@ describe('Geometry', () => {
               ],
               [1.5, 1]
             )
-          ).toBe(1);
+          ).toEqual([1]);
           // corner
           expect(
             pointInPerimeter(
@@ -165,7 +166,7 @@ describe('Geometry', () => {
               ],
               [1, 1]
             )
-          ).toBe(0);
+          ).toEqual([0, 1]);
         });
         it('should NOT be in the perimeter', () => {
           // center
@@ -177,7 +178,7 @@ describe('Geometry', () => {
               ],
               [1.5, 1.5]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
           // outside (but aligned on the first axis)
           expect(
             pointInPerimeter(
@@ -187,7 +188,7 @@ describe('Geometry', () => {
               ],
               [0.5, 1]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
         });
       });
       describe('rectangle', () => {
@@ -204,7 +205,7 @@ describe('Geometry', () => {
                 [1.75, 1],
               ]
             )
-          ).toBe(1);
+          ).toEqual([1]);
           // corner
           expect(
             rectangleInPerimeter(
@@ -217,7 +218,7 @@ describe('Geometry', () => {
                 [1, 1],
               ]
             )
-          ).toBe(0);
+          ).toEqual([0, 1]);
           // line
           expect(
             rectangleInPerimeter(
@@ -230,7 +231,7 @@ describe('Geometry', () => {
                 [1, 1.75],
               ]
             )
-          ).toBe(0);
+          ).toEqual([0, 2]);
           // line (itself)
           expect(
             rectangleInPerimeter(
@@ -243,7 +244,7 @@ describe('Geometry', () => {
                 [1, 2],
               ]
             )
-          ).toBe(0);
+          ).toEqual([0, 2]);
         });
         it('should NOT be in perimeter', () => {
           // center
@@ -258,7 +259,7 @@ describe('Geometry', () => {
                 [1.75, 1.75],
               ]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
           expect(
             rectangleInPerimeter(
               [
@@ -270,7 +271,7 @@ describe('Geometry', () => {
                 [2, 2],
               ]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
           expect(
             rectangleInPerimeter(
               [
@@ -282,7 +283,7 @@ describe('Geometry', () => {
                 [2.5, 2.5],
               ]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
           // shifted
           expect(
             rectangleInPerimeter(
@@ -295,7 +296,7 @@ describe('Geometry', () => {
                 [3, 2],
               ]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
           // outside (but aligned on the first axis)
           expect(
             rectangleInPerimeter(
@@ -308,7 +309,7 @@ describe('Geometry', () => {
                 [2.5, 1],
               ]
             )
-          ).toBe(undefined);
+          ).toEqual([]);
         });
       });
     });
@@ -466,6 +467,21 @@ describe('Geometry', () => {
     });
 
     describe('intersections', () => {
+      it('shoud be disjoint', () => {
+        expect(
+          polygonsAreDisjoint(
+            polygon1,
+            // polygon 2 translated by -2 on the y axis
+            polygon2.map(
+              (rectangle): Rectangle<2> =>
+                rectangle.map(([x, y]): Point<2> => [x, y - 2]) as Rectangle<2>
+            )
+          )
+        ).toBe(true);
+      });
+      it('shoud NOT be disjoint', () => {
+        expect(polygonsAreDisjoint(polygon1, polygon2)).toBe(false);
+      });
       it('should deduce correclty their intersections', () => {
         expect(JSON.stringify(polygonIntersection(polygon1, polygon2))).toBe(
           '[[[3,2],[3,3]],[[3,3],[3,4]],[[3,2],[4,3]],[[3,3],[4,3]],[[4,2],[5,3]],[[4,3],[5,4]]]'
@@ -543,6 +559,31 @@ describe('Geometry', () => {
             '[[[1,0,0],[3,3,3]],[[3,0,0],[4,1,3]],[[3,2,0],[4,3,3]],[[3,1,0],[4,2,2]]]'
           );
         });
+      });
+    });
+
+    describe('expansion', () => {
+      it('should expand a polygon to enclose a point minimizing additional area', () => {
+        expect(JSON.stringify(polygonExpand(polygon1, [5, 5]))).toBe(
+          JSON.stringify([
+            rectangle1A,
+            rectangle1B,
+            [
+              [4, 2],
+              [5, 5],
+            ],
+          ])
+        );
+        expect(JSON.stringify(polygonExpand(polygon1, [3.9, 4]))).toBe(
+          JSON.stringify([
+            rectangle1A,
+            rectangle1B,
+            [
+              [3.9, 2],
+              [5, 4],
+            ],
+          ])
+        );
       });
     });
 
@@ -684,28 +725,6 @@ describe('Geometry', () => {
         expect(
           JSON.stringify(refine(polygonIntersection(polygon1, polygon2)))
         ).toBe('[[[3,3],[3,4]],[[3,2],[5,3]],[[4,3],[5,4]]]');
-      });
-      it('should expand a polygon to enclose a point minimizing additional area', () => {
-        expect(JSON.stringify(polygonExpand(polygon1, [5, 5]))).toBe(
-          JSON.stringify([
-            rectangle1A,
-            rectangle1B,
-            [
-              [4, 2],
-              [5, 5],
-            ],
-          ])
-        );
-        expect(JSON.stringify(polygonExpand(polygon1, [3.9, 4]))).toBe(
-          JSON.stringify([
-            rectangle1A,
-            rectangle1B,
-            [
-              [3.9, 2],
-              [5, 4],
-            ],
-          ])
-        );
       });
     });
   });

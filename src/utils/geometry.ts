@@ -21,35 +21,36 @@ export const dominates = <Dimensions extends number>(
  * Definition 10. Check whether a point is in the rectangle perimeter.
  * @param rectangle
  * @param point
- * @returns {number | undefined} axis of alignement, undefined if the point is not in the perimeter
+ * @returns {number[]} axis of alignement, empty if the point is not in the perimeter
  */
 export const pointInPerimeter = <Dimensions extends number>(
   [ll, ur]: Rectangle<Dimensions>,
   point: Point<Dimensions>
-): number | undefined => {
+): number[] => {
   const dimensions = ll.length;
+  const axisArr = [];
   for (let axis = 0; axis < dimensions; axis++) {
     if (rectangleIncludesPoint([ll, ur], point)) {
-      if (point[axis] === ll[axis]) return axis;
-      if (point[axis] === ur[axis]) return axis + dimensions; // to distinguish the sides
+      if (point[axis] === ll[axis]) axisArr.push(axis);
+      if (point[axis] === ur[axis]) axisArr.push(axis + dimensions); // to distinguish the sides
     }
   }
-  return undefined;
+  return axisArr;
 };
 
 /**
  * Check whether rectangle B is in the perimeter of rectangle A.
  * @param rectangleA
  * @param rectangleB
- * @returns {number | undefined} axis of alignement, undefined if rectangle B is not in the perimeter of rectangle A
+ * @returns {number[]} axis of alignement, empty if rectangle B is not in the perimeter of rectangle A
  */
 export const rectangleInPerimeter = <Dimensions extends number>(
   rectangle: Rectangle<Dimensions>,
   [ll, ur]: Rectangle<Dimensions>
-): number | undefined => {
+): number[] => {
   const perll = pointInPerimeter(rectangle, ll);
   const perur = pointInPerimeter(rectangle, ur);
-  return perll === perur ? perll : undefined;
+  return perll.filter((axis) => perur.indexOf(axis) >= 0);
 };
 
 /**
@@ -106,7 +107,7 @@ export const rectanglesAreDisjoint = <Dimensions extends number>(
   if (!intersection) return true;
   const perA = rectangleInPerimeter(rectangleA, intersection);
   const perB = rectangleInPerimeter(rectangleB, intersection);
-  return perA !== undefined && perB !== undefined;
+  return perA.length > 0 && perB.length > 0;
 };
 
 /**
@@ -305,7 +306,7 @@ export const refine = <Dimensions extends number>(
   rectangles = rectangles.filter((rectangle) => {
     for (const otherRectangle of rectangles) {
       if (
-        rectangleInPerimeter(otherRectangle, rectangle) !== undefined &&
+        rectangleInPerimeter(otherRectangle, rectangle).length > 0 &&
         rectangle !== otherRectangle
       )
         return false;
