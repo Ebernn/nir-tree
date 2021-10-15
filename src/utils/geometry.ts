@@ -106,7 +106,7 @@ export const rectanglesAreDisjoint = <Dimensions extends number>(
   if (!intersection) return true;
   const perA = rectangleInPerimeter(rectangleA, intersection);
   const perB = rectangleInPerimeter(rectangleB, intersection);
-  return perA !== undefined && perA === perB;
+  return perA !== undefined && perB !== undefined;
 };
 
 /**
@@ -260,7 +260,7 @@ export const refine = <Dimensions extends number>(
   rectangles = rectangles.filter((rectangle) => {
     for (const otherRectangle of rectangles) {
       if (
-        rectangleInPerimeter(otherRectangle, rectangle) &&
+        rectangleInPerimeter(otherRectangle, rectangle) !== undefined &&
         rectangle !== otherRectangle
       )
         return false;
