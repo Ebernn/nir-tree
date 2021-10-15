@@ -138,9 +138,7 @@ describe('Geometry', () => {
         expect(rectanglesAreDisjoint(rectangleA, rectangleB)).toBe(false);
       });
       it('should deduce correclty their intersections', () => {
-        expect(
-          JSON.stringify(rectangleIntersection(rectangleA, rectangleC))
-        ).toBeUndefined();
+        expect(rectangleIntersection(rectangleA, rectangleC)).toBeUndefined();
       });
     });
 
@@ -483,19 +481,40 @@ describe('Geometry', () => {
         expect(polygonsAreDisjoint(polygon1, polygon2)).toBe(false);
       });
       it('should deduce correclty their intersections', () => {
-        expect(JSON.stringify(polygonIntersection(polygon1, polygon2))).toBe(
-          '[[[3,2],[3,3]],[[3,3],[3,4]],[[3,2],[4,3]],[[3,3],[4,3]],[[4,2],[5,3]],[[4,3],[5,4]]]'
-        );
+        expect(polygonIntersection(polygon1, polygon2)).toEqual([
+          [
+            [3, 2],
+            [3, 3],
+          ],
+          [
+            [3, 3],
+            [3, 4],
+          ],
+          [
+            [3, 2],
+            [4, 3],
+          ],
+          [
+            [3, 3],
+            [4, 3],
+          ],
+          [
+            [4, 2],
+            [5, 3],
+          ],
+          [
+            [4, 3],
+            [5, 4],
+          ],
+        ]);
         expect(
-          JSON.stringify(
-            polygonIntersection(polygon1, [
-              [
-                [2, 2],
-                [5, 4],
-              ],
-            ])
-          )
-        ).toBe(JSON.stringify(polygon1));
+          polygonIntersection(polygon1, [
+            [
+              [2, 2],
+              [5, 4],
+            ],
+          ])
+        ).toEqual(polygon1);
         expect(
           polygonIntersection(polygon1, [
             [
@@ -527,63 +546,89 @@ describe('Geometry', () => {
       describe('rectangle VS rectangle', () => {
         it('should correctly replace rectangle with fragments of itself', () => {
           expect(
-            JSON.stringify(
-              rectangleFragmentation(
-                [
-                  [1, 0, 0],
-                  [4, 3, 3],
-                ],
-                [
-                  [3, 1, 1],
-                  [5, 2, 2],
-                ]
-              )
+            rectangleFragmentation(
+              [
+                [1, 0, 0],
+                [4, 3, 3],
+              ],
+              [
+                [3, 1, 1],
+                [5, 2, 2],
+              ]
             )
-          ).toBe(
-            '[[[1,0,0],[3,3,3]],[[3,0,0],[4,1,3]],[[3,2,0],[4,3,3]],[[3,1,0],[4,2,1]],[[3,1,2],[4,2,3]]]'
-          );
+          ).toEqual([
+            [
+              [1, 0, 0],
+              [3, 3, 3],
+            ],
+            [
+              [3, 0, 0],
+              [4, 1, 3],
+            ],
+            [
+              [3, 2, 0],
+              [4, 3, 3],
+            ],
+            [
+              [3, 1, 0],
+              [4, 2, 1],
+            ],
+            [
+              [3, 1, 2],
+              [4, 2, 3],
+            ],
+          ]);
           expect(
-            JSON.stringify(
-              rectangleFragmentation(
-                [
-                  [1, 0, 0],
-                  [4, 3, 3],
-                ],
-                [
-                  [3, 1, 2],
-                  [5, 2, 3],
-                ]
-              )
+            rectangleFragmentation(
+              [
+                [1, 0, 0],
+                [4, 3, 3],
+              ],
+              [
+                [3, 1, 2],
+                [5, 2, 3],
+              ]
             )
-          ).toBe(
-            '[[[1,0,0],[3,3,3]],[[3,0,0],[4,1,3]],[[3,2,0],[4,3,3]],[[3,1,0],[4,2,2]]]'
-          );
+          ).toEqual([
+            [
+              [1, 0, 0],
+              [3, 3, 3],
+            ],
+            [
+              [3, 0, 0],
+              [4, 1, 3],
+            ],
+            [
+              [3, 2, 0],
+              [4, 3, 3],
+            ],
+            [
+              [3, 1, 0],
+              [4, 2, 2],
+            ],
+          ]);
         });
       });
     });
 
     describe('expansion', () => {
       it('should expand a polygon to enclose a point minimizing additional area', () => {
-        expect(JSON.stringify(polygonExpand(polygon1, [5, 5]))).toBe(
-          JSON.stringify([
-            rectangle1A,
-            rectangle1B,
-            [
-              [4, 2],
-              [5, 5],
-            ],
-          ])
-        );
-        expect(JSON.stringify(polygonExpand(polygon1, [3.9, 4]))).toBe(
-          JSON.stringify([
-            rectangle1A,
-            rectangle1B,
-            [
-              [3.9, 2],
-              [5, 4],
-            ],
-          ])
-        );
+        expect(polygonExpand(polygon1, [5, 5])).toEqual([
+          rectangle1A,
+          rectangle1B,
+          [
+            [4, 2],
+            [5, 5],
+          ],
+        ]);
+        expect(polygonExpand(polygon1, [3.9, 4])).toEqual([
+          rectangle1A,
+          rectangle1B,
+          [
+            [3.9, 2],
+            [5, 4],
+          ],
+        ]);
       });
     });
 
@@ -591,140 +636,183 @@ describe('Geometry', () => {
       it('should remove rectangles on edges', () => {
         // edge
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [2, 2],
-              ],
-              [
-                [1, 1],
-                [2, 1],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [2, 2],
+            ],
+            [
+              [1, 1],
+              [2, 1],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ]);
         // corner
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [2, 2],
-              ],
-              [
-                [1, 1],
-                [1, 1],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [2, 2],
+            ],
+            [
+              [1, 1],
+              [1, 1],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ]);
       });
       it('should simplify inclusions', () => {
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [2, 2],
-              ],
-              [
-                [1.25, 1.25],
-                [1.75, 1.75],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [2, 2],
+            ],
+            [
+              [1.25, 1.25],
+              [1.75, 1.75],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ]);
       });
       it('should merge rectangles into columns / rows', () => {
         // column
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [2, 1.5],
-              ],
-              [
-                [1, 1.5],
-                [2, 2],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [2, 1.5],
+            ],
+            [
+              [1, 1.5],
+              [2, 2],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ]);
         // row
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [1.5, 2],
-              ],
-              [
-                [1.5, 1],
-                [2, 2],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [1.5, 2],
+            ],
+            [
+              [1.5, 1],
+              [2, 2],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ]);
         // mix
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [1.5, 1.5],
-              ],
-              [
-                [1.5, 1],
-                [2, 1.5],
-              ],
-              [
-                [1, 1.5],
-                [1.5, 2],
-              ],
-              [
-                [1.5, 1.5],
-                [2, 2],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [1.5, 1.5],
+            ],
+            [
+              [1.5, 1],
+              [2, 1.5],
+            ],
+            [
+              [1, 1.5],
+              [1.5, 2],
+            ],
+            [
+              [1.5, 1.5],
+              [2, 2],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+        ]);
       });
       it('should not merge anything', () => {
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [2, 1.5],
-              ],
-              [
-                [2, 1.5],
-                [2, 2],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,1.5]],[[2,1.5],[2,2]]]');
+          refine([
+            [
+              [1, 1],
+              [2, 1.5],
+            ],
+            [
+              [2, 1.5],
+              [2, 2],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 1.5],
+          ],
+          [
+            [2, 1.5],
+            [2, 2],
+          ],
+        ]);
         expect(
-          JSON.stringify(
-            refine([
-              [
-                [1, 1],
-                [2, 2],
-              ],
-              [
-                [3, 1],
-                [4, 2],
-              ],
-            ])
-          )
-        ).toBe('[[[1,1],[2,2]],[[3,1],[4,2]]]');
+          refine([
+            [
+              [1, 1],
+              [2, 2],
+            ],
+            [
+              [3, 1],
+              [4, 2],
+            ],
+          ])
+        ).toEqual([
+          [
+            [1, 1],
+            [2, 2],
+          ],
+          [
+            [3, 1],
+            [4, 2],
+          ],
+        ]);
       });
       it('should refine intersection', () => {
-        expect(
-          JSON.stringify(refine(polygonIntersection(polygon1, polygon2)))
-        ).toBe('[[[3,3],[3,4]],[[3,2],[5,3]],[[4,3],[5,4]]]');
+        expect(refine(polygonIntersection(polygon1, polygon2))).toEqual([
+          [
+            [3, 3],
+            [3, 4],
+          ],
+          [
+            [3, 2],
+            [5, 3],
+          ],
+          [
+            [4, 3],
+            [5, 4],
+          ],
+        ]);
       });
     });
   });
