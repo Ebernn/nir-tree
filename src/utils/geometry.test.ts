@@ -548,6 +548,48 @@ describe('Geometry', () => {
           expect(
             rectangleFragmentation(
               [
+                [6, 5],
+                [10, 7],
+              ],
+              [
+                [8, 3],
+                [9, 6],
+              ]
+            )
+          ).toEqual([
+            [
+              [6, 5],
+              [8, 7],
+            ],
+            [
+              [9, 5],
+              [10, 7],
+            ],
+            [
+              [8, 6],
+              [9, 7],
+            ],
+          ]);
+          /* expect(
+            rectangleFragmentation(
+              [
+                [6, 5],
+                [10, 7],
+              ],
+              [
+                [4, 7],
+                [6, 9],
+              ]
+            )
+          ).toEqual([
+            [
+              [6, 5],
+              [10, 7],
+            ],
+          ]); */
+          expect(
+            rectangleFragmentation(
+              [
                 [1, 0, 0],
                 [4, 3, 3],
               ],

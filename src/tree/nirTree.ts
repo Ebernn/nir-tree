@@ -11,53 +11,66 @@ import { Point, Polygon } from '../utils/types';
 
 // Definitions
 
-type RootNode<Dimensions extends number> =
-  | { points: Point<Dimensions>[]; isLeaf: true }
-  | { branches: Branch<Dimensions>[]; isLeaf: false };
-type RoutingNode<Dimensions extends number> = {
-  parent: Node<Dimensions>;
+export type RoutingNode<Dimensions extends number> = {
+  parent: RoutingNode<Dimensions> | undefined;
   branches: Branch<Dimensions>[];
-  isLeaf: false;
 };
-type LeafNode<Dimensions extends number> = {
-  parent: Node<Dimensions>;
+export type LeafNode<Dimensions extends number> = {
+  parent: RoutingNode<Dimensions> | undefined;
   points: Point<Dimensions>[];
-  isLeaf: true;
 };
-type Branch<Dimensions extends number> = {
+export type Branch<Dimensions extends number> = {
   child: Node<Dimensions>;
   polygon: Polygon<Dimensions>;
 };
-type Node<Dimensions extends number> =
-  | RootNode<Dimensions>
+export type Node<Dimensions extends number> =
   | RoutingNode<Dimensions>
   | LeafNode<Dimensions>;
+export const isLeaf = <Dimensions extends number>(
+  node: Node<Dimensions>
+): node is LeafNode<Dimensions> =>
+  (<LeafNode<Dimensions>>node).points !== undefined;
+
+/**
+ * Retreive a node polygon (TODO : find a better way to retreive it)
+ * @param node
+ * @returns node polygon (if it exists)
+ */
+export const getNodePolygon = <Dimensions extends number>(
+  node: Node<Dimensions>
+): Polygon<Dimensions> | undefined => {
+  if (node.parent === undefined) return undefined;
+  for (const branch of node.parent.branches) {
+    if (branch.child === node) return branch.polygon;
+  }
+};
 
 /**
  * Algorithm 1. Insert a point in a branch leaf (choose the best polygon)
- * @param rootBranch
+ * @param root
  * @param point
  * @returns the leaf node where the node has been inserted
  */
 export const chooseLeaf = <Dimensions extends number>(
-  // prefer using a branch instead of a node (so we do not lose the polygon information)
-  rootBranch: Branch<Dimensions>,
+  root: Node<Dimensions>,
   point: Point<Dimensions>
-): LeafNode<Dimensions> | { points: Point<Dimensions>[]; isLeaf: true } => {
-  let leafBranch: Branch<Dimensions> = rootBranch;
-  while (!leafBranch.child.isLeaf) {
+): LeafNode<Dimensions> => {
+  let leaf: Node<Dimensions> = root;
+  while (!isLeaf(leaf)) {
     // let's find a branch including the point
     let branchIncludingPoint = false;
-    const branches = leafBranch.child.branches;
+    const branches = leaf.branches;
     for (const branch of branches) {
       if (polygonIncludesPoint(branch.polygon, point)) {
-        leafBranch = branch;
+        leaf = branch.child;
+        console.log(point, 'in', branch.polygon);
         branchIncludingPoint = true;
         break;
       }
     }
     // we do not have found any branch including the point, so let's expand a branch polygon
     if (!branchIncludingPoint) {
+      console.log(point, 'NOT in branch');
       // find and expand the best polygon, minimizing additional area to enclose the point
       // eslint-disable-next-line prefer-const
       let [minIndex, minExpandedPolygon] = branches.reduce(
@@ -72,10 +85,26 @@ export const chooseLeaf = <Dimensions extends number>(
         [-1, branches[0].polygon, Number.POSITIVE_INFINITY]
       );
       if (minIndex < 0) throw new Error('The non-leaf node has no branch.');
+      console.log(' - original : ', branches[minIndex].polygon);
+      console.log(' - after expansion : ', minExpandedPolygon);
       // fragment it (with non-disjoint neighboring polygons)
+      console.log(
+        ' - non disjoint polygons : ',
+        JSON.stringify(
+          branches
+            .filter(
+              ({ polygon }, index) =>
+                !polygonsAreDisjoint(polygon, minExpandedPolygon) &&
+                index !== minIndex
+            )
+            .map(({ polygon }) => polygon)
+        )
+      );
       branches
         .filter(
-          ({ polygon }) => !polygonsAreDisjoint(polygon, minExpandedPolygon)
+          ({ polygon }, index) =>
+            !polygonsAreDisjoint(polygon, minExpandedPolygon) &&
+            index !== minIndex
         )
         .forEach(({ polygon }) => {
           minExpandedPolygon = polygonFragmentation(
@@ -83,15 +112,17 @@ export const chooseLeaf = <Dimensions extends number>(
             polygon
           );
         });
-      // intersect it (with its parent polygon)
-      minExpandedPolygon = polygonIntersection(
-        minExpandedPolygon,
-        leafBranch.polygon
-      );
+      console.log(' - after fragmentation : ', minExpandedPolygon);
+      // intersect it (with its parent polygon) if leaf is not the root
+      const polygon = getNodePolygon(leaf);
+      if (polygon)
+        minExpandedPolygon = polygonIntersection(minExpandedPolygon, polygon);
+      console.log(' - after intersection : ', minExpandedPolygon);
       // refine it (and update the branch)
       branches[minIndex].polygon = refine(minExpandedPolygon);
-      leafBranch = branches[minIndex];
+      console.log(' - after refinement : ', branches[minIndex].polygon);
+      leaf = branches[minIndex].child;
     }
   }
-  return leafBranch.child;
+  return leaf;
 };
