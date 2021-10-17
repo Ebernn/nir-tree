@@ -266,15 +266,25 @@ export const rectangleFragmentation = <Dimensions extends number>(
     ceilings.push([cill, ciur]);
     floors.push([fill, fiur]);
   }
+  // TODO : improve rectangle filters if possible
   return (
-    [...floors, ...ceilings]
-      // remove useless rectangles
-      .filter(
-        ([ll, ur]) =>
-          dominates(ur, ll) &&
-          ll.every((comp, axis) => comp <= Rur[axis]) &&
-          ur.every((comp, axis) => comp >= Rll[axis])
-      )
+    // filter non-relevant rectangles
+    [
+      ...floors.filter(([ll, ur], axis) => {
+        if (ll[axis] === ur[axis] || Rll[axis] === Rur[axis]) return false;
+        for (let j = 0; j <= axis; j++) {
+          if (ur[j] < Rll[j]) return false;
+        }
+        return true;
+      }),
+      ...ceilings.filter(([ll, ur], axis) => {
+        if (ll[axis] === ur[axis] || Rll[axis] === Rur[axis]) return false;
+        for (let j = 0; j <= axis; j++) {
+          if (ll[j] > Rur[j]) return false;
+        }
+        return true;
+      }),
+    ]
       // clamp the point components
       .map(([ll, ur]) => [clamp(ll), clamp(ur)] as Rectangle<Dimensions>)
   );

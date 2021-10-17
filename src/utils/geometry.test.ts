@@ -619,6 +619,44 @@ describe('Geometry', () => {
             ],
           ]);
           expect(
+            refine(
+              rectangleFragmentation(
+                [
+                  [6, 5],
+                  [10, 7],
+                ],
+                [
+                  [5, 7],
+                  [7, 9],
+                ]
+              )
+            )
+          ).toEqual([
+            [
+              [6, 5],
+              [10, 7],
+            ],
+          ]);
+          expect(
+            refine(
+              rectangleFragmentation(
+                [
+                  [6, 5],
+                  [10, 7],
+                ],
+                [
+                  [4, 7],
+                  [6, 9],
+                ]
+              )
+            )
+          ).toEqual([
+            [
+              [6, 5],
+              [10, 7],
+            ],
+          ]);
+          expect(
             rectangleFragmentation(
               [
                 [6, 5],
@@ -633,6 +671,27 @@ describe('Geometry', () => {
             [
               [6, 5],
               [10, 7],
+            ],
+          ]);
+          expect(
+            rectangleFragmentation(
+              [
+                [4, 3],
+                [10, 9],
+              ],
+              [
+                [9, 3],
+                [13, 5],
+              ]
+            )
+          ).toEqual([
+            [
+              [4, 3],
+              [9, 9],
+            ],
+            [
+              [9, 5],
+              [10, 9],
             ],
           ]);
           expect(
@@ -696,8 +755,200 @@ describe('Geometry', () => {
               [3, 2, 0],
               [4, 3, 3],
             ],
+          ]);
+          expect(
+            refine(
+              rectangleFragmentation(
+                [
+                  [1, 0, 0],
+                  [4, 3, 3],
+                ],
+                [
+                  [3, 1, 3],
+                  [5, 2, 4],
+                ]
+              )
+            )
+          ).toEqual([
             [
-              [3, 1, 3],
+              [1, 0, 0],
+              [4, 3, 3],
+            ],
+          ]);
+        });
+        it('should correctly replace rectangle with fragments of itself (planes & lines)', () => {
+          // 2D case (line)
+          expect(
+            rectangleFragmentation(
+              [
+                [0, 0],
+                [4, 0],
+              ],
+              [
+                [1, -1],
+                [3, 1],
+              ]
+            )
+          ).toEqual([
+            [
+              [0, 0],
+              [1, 0],
+            ],
+            [
+              [3, 0],
+              [4, 0],
+            ],
+          ]);
+          expect(
+            rectangleFragmentation(
+              [
+                [0, 0],
+                [0, 4],
+              ],
+              [
+                [-1, 1],
+                [1, 3],
+              ]
+            )
+          ).toEqual([
+            [
+              [0, 0],
+              [0, 1],
+            ],
+            [
+              [0, 3],
+              [0, 4],
+            ],
+          ]);
+          expect(
+            rectangleFragmentation(
+              [
+                [0, 0],
+                [4, 0],
+              ],
+              [
+                [1, 0],
+                [3, 2],
+              ]
+            )
+          ).toEqual([
+            [
+              [0, 0],
+              [1, 0],
+            ],
+            [
+              [3, 0],
+              [4, 0],
+            ],
+          ]);
+          expect(
+            rectangleFragmentation(
+              [
+                [0, 0],
+                [0, 4],
+              ],
+              [
+                [0, 1],
+                [2, 3],
+              ]
+            )
+          ).toEqual([
+            [
+              [0, 0],
+              [0, 1],
+            ],
+            [
+              [0, 3],
+              [0, 4],
+            ],
+          ]);
+          // 3D case (plane)
+          expect(
+            rectangleFragmentation(
+              [
+                [4, 0, 0],
+                [4, 3, 3],
+              ],
+              [
+                [3, 1, 1],
+                [5, 2, 2],
+              ]
+            )
+          ).toEqual([
+            [
+              [4, 0, 0],
+              [4, 1, 3],
+            ],
+            [
+              [4, 1, 0],
+              [4, 2, 1],
+            ],
+            [
+              [4, 2, 0],
+              [4, 3, 3],
+            ],
+            [
+              [4, 1, 2],
+              [4, 2, 3],
+            ],
+          ]);
+
+          expect(
+            rectangleFragmentation(
+              [
+                [0, 4, 0],
+                [3, 4, 3],
+              ],
+              [
+                [1, 3, 1],
+                [2, 5, 2],
+              ]
+            )
+          ).toEqual([
+            [
+              [0, 4, 0],
+              [1, 4, 3],
+            ],
+            [
+              [1, 4, 0],
+              [2, 4, 1],
+            ],
+            [
+              [2, 4, 0],
+              [3, 4, 3],
+            ],
+            [
+              [1, 4, 2],
+              [2, 4, 3],
+            ],
+          ]);
+
+          expect(
+            rectangleFragmentation(
+              [
+                [4, 0, 0],
+                [4, 3, 3],
+              ],
+              [
+                [4, 1, 1],
+                [6, 2, 2],
+              ]
+            )
+          ).toEqual([
+            [
+              [4, 0, 0],
+              [4, 1, 3],
+            ],
+            [
+              [4, 1, 0],
+              [4, 2, 1],
+            ],
+            [
+              [4, 2, 0],
+              [4, 3, 3],
+            ],
+            [
+              [4, 1, 2],
               [4, 2, 3],
             ],
           ]);
