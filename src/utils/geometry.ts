@@ -307,7 +307,7 @@ export const polygonFragmentation = <Dimensions extends number>(
         .reduce(
           (intersectedPolygon, polygon) =>
             polygonIntersection(intersectedPolygon, polygon),
-          rectangleFragmentation(rectanglesP[0], rectanglesPp[0])
+          [rectangleP]
         )
     )
     .flat(1);
