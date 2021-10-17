@@ -133,6 +133,54 @@ describe('Geometry', () => {
             rectangleC.map(([x, y]): Point<2> => [x - 1, y]) as Rectangle<2>
           )
         ).toBe(true);
+        expect(
+          rectanglesAreDisjoint(
+            [
+              [4, 7],
+              [6, 9],
+            ],
+            [
+              [6, 5],
+              [8, 7],
+            ]
+          )
+        ).toBe(true);
+        expect(
+          rectanglesAreDisjoint(
+            [
+              [5, 3],
+              [6, 6],
+            ],
+            [
+              [6, 5],
+              [8, 7],
+            ]
+          )
+        ).toBe(true);
+        expect(
+          rectanglesAreDisjoint(
+            [
+              [8, 3],
+              [9, 6],
+            ],
+            [
+              [6, 5],
+              [8, 7],
+            ]
+          )
+        ).toBe(true);
+        expect(
+          rectanglesAreDisjoint(
+            [
+              [6, 3],
+              [8, 5],
+            ],
+            [
+              [6, 5],
+              [8, 7],
+            ]
+          )
+        ).toBe(true);
       });
       it('shoud NOT be disjoint', () => {
         expect(rectanglesAreDisjoint(rectangleA, rectangleB)).toBe(false);
@@ -570,15 +618,15 @@ describe('Geometry', () => {
               [9, 7],
             ],
           ]);
-          /* expect(
+          expect(
             rectangleFragmentation(
               [
                 [6, 5],
                 [10, 7],
               ],
               [
-                [4, 7],
-                [6, 9],
+                [3, 7],
+                [5, 9],
               ]
             )
           ).toEqual([
@@ -586,7 +634,7 @@ describe('Geometry', () => {
               [6, 5],
               [10, 7],
             ],
-          ]); */
+          ]);
           expect(
             rectangleFragmentation(
               [
@@ -608,12 +656,12 @@ describe('Geometry', () => {
               [4, 1, 3],
             ],
             [
-              [3, 2, 0],
-              [4, 3, 3],
-            ],
-            [
               [3, 1, 0],
               [4, 2, 1],
+            ],
+            [
+              [3, 2, 0],
+              [4, 3, 3],
             ],
             [
               [3, 1, 2],
@@ -641,12 +689,16 @@ describe('Geometry', () => {
               [4, 1, 3],
             ],
             [
+              [3, 1, 0],
+              [4, 2, 2],
+            ],
+            [
               [3, 2, 0],
               [4, 3, 3],
             ],
             [
-              [3, 1, 0],
-              [4, 2, 2],
+              [3, 1, 3],
+              [4, 2, 3],
             ],
           ]);
         });

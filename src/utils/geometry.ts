@@ -245,31 +245,39 @@ export const rectangleFragmentation = <Dimensions extends number>(
   [Rll, Rur]: Rectangle<Dimensions>,
   [Rpll, Rpur]: Rectangle<Dimensions>
 ): Polygon<Dimensions> => {
-  const dimensions = Rpll.length;
-  // our result, fragmented rectangle R
-  const fragments: Polygon<Dimensions> = [];
-  // remaining rectangle to be fragmented
-  const [rll, rur]: Rectangle<Dimensions> = [Rll, Rur];
-  const inside = (point: Point<Dimensions>, axis: number) =>
-    rll[axis] < point[axis] && rur[axis] > point[axis];
-  // fragment the remaining rectangle
-  for (let axis = 0; axis < dimensions; axis++) {
-    // move the remaining rectangle face to fit Rpll / Rpur on this axis if possible
-    if (inside(Rpll, axis))
-      fragments.push([
-        [...rll],
-        Rur.map((comp, RurAxis) => (RurAxis === axis ? Rpll[axis] : comp)),
-      ] as Rectangle<Dimensions>);
-    if (inside(Rpur, axis))
-      fragments.push([
-        Rll.map((comp, RllAxis) => (RllAxis === axis ? Rpur[axis] : comp)),
-        [...rur],
-      ] as Rectangle<Dimensions>);
-    // update the remaining rectangle
-    rll[axis] = Math.max(rll[axis], Rpll[axis]);
-    rur[axis] = Math.min(rur[axis], Rpur[axis]);
+  const dimensions = Rll.length;
+  const ceilings: Polygon<Dimensions> = [];
+  const floors: Polygon<Dimensions> = [];
+  // simply create a point
+  const point = (comp: (axis: number) => number) =>
+    [...new Array(dimensions)].map((_, j) => comp(j)) as Point<Dimensions>;
+  // clamp a point component
+  const clamp = (point: Point<Dimensions>) =>
+    point.map((comp, axis) => Math.max(Rll[axis], Math.min(Rur[axis], comp)));
+  for (let i = 0; i < dimensions; i++) {
+    const [cill, ciur]: Rectangle<Dimensions> = [
+      point((j) => (j < i ? floors[j][1][j] : j === i ? Rpur[j] : Rll[j])),
+      point((j) => (j < i ? ceilings[j][0][j] : Rur[j])),
+    ];
+    const [fill, fiur]: Rectangle<Dimensions> = [
+      point((j) => (j < i ? floors[j][1][j] : Rll[j])),
+      point((j) => (j < i ? ceilings[j][0][j] : j === i ? Rpll[j] : Rur[j])),
+    ];
+    ceilings.push([cill, ciur]);
+    floors.push([fill, fiur]);
   }
-  return fragments;
+  return (
+    [...floors, ...ceilings]
+      // remove useless rectangles
+      .filter(
+        ([ll, ur]) =>
+          dominates(ur, ll) &&
+          ll.every((comp, axis) => comp <= Rur[axis]) &&
+          ur.every((comp, axis) => comp >= Rll[axis])
+      )
+      // clamp the point components
+      .map(([ll, ur]) => [clamp(ll), clamp(ur)] as Rectangle<Dimensions>)
+  );
 };
 
 /**
@@ -284,11 +292,15 @@ export const polygonFragmentation = <Dimensions extends number>(
 ): Polygon<Dimensions> =>
   rectanglesP
     .map((rectangleP) =>
-      rectanglesPp.map((rectanglePp) =>
-        rectangleFragmentation(rectangleP, rectanglePp)
-      )
+      rectanglesPp
+        .map((rectanglePp) => rectangleFragmentation(rectangleP, rectanglePp))
+        .reduce(
+          (intersectedPolygon, polygon) =>
+            polygonIntersection(intersectedPolygon, polygon),
+          rectangleFragmentation(rectanglesP[0], rectanglesPp[0])
+        )
     )
-    .flat(2);
+    .flat(1);
 
 /**
  * Simplify a polygon (remove useless rectangles, merge some of them).

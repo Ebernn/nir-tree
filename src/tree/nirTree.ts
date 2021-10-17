@@ -63,14 +63,12 @@ export const chooseLeaf = <Dimensions extends number>(
     for (const branch of branches) {
       if (polygonIncludesPoint(branch.polygon, point)) {
         leaf = branch.child;
-        console.log(point, 'in', branch.polygon);
         branchIncludingPoint = true;
         break;
       }
     }
     // we do not have found any branch including the point, so let's expand a branch polygon
     if (!branchIncludingPoint) {
-      console.log(point, 'NOT in branch');
       // find and expand the best polygon, minimizing additional area to enclose the point
       // eslint-disable-next-line prefer-const
       let [minIndex, minExpandedPolygon] = branches.reduce(
@@ -85,21 +83,7 @@ export const chooseLeaf = <Dimensions extends number>(
         [-1, branches[0].polygon, Number.POSITIVE_INFINITY]
       );
       if (minIndex < 0) throw new Error('The non-leaf node has no branch.');
-      console.log(' - original : ', branches[minIndex].polygon);
-      console.log(' - after expansion : ', minExpandedPolygon);
       // fragment it (with non-disjoint neighboring polygons)
-      console.log(
-        ' - non disjoint polygons : ',
-        JSON.stringify(
-          branches
-            .filter(
-              ({ polygon }, index) =>
-                !polygonsAreDisjoint(polygon, minExpandedPolygon) &&
-                index !== minIndex
-            )
-            .map(({ polygon }) => polygon)
-        )
-      );
       branches
         .filter(
           ({ polygon }, index) =>
@@ -112,15 +96,12 @@ export const chooseLeaf = <Dimensions extends number>(
             polygon
           );
         });
-      console.log(' - after fragmentation : ', minExpandedPolygon);
       // intersect it (with its parent polygon) if leaf is not the root
       const polygon = getNodePolygon(leaf);
       if (polygon)
         minExpandedPolygon = polygonIntersection(minExpandedPolygon, polygon);
-      console.log(' - after intersection : ', minExpandedPolygon);
       // refine it (and update the branch)
       branches[minIndex].polygon = refine(minExpandedPolygon);
-      console.log(' - after refinement : ', branches[minIndex].polygon);
       leaf = branches[minIndex].child;
     }
   }
