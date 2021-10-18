@@ -2,11 +2,20 @@ import type { NextPage } from 'next';
 import styles from '../styles/Home.module.css';
 import useControllerRef from '../hooks/viewport/useControllerRef';
 import useControlledCanvasViewRef from '../hooks/viewport/useControlledCanvasViewRef';
-// import { buildExampleTree } from '../src/tree/misc/buildTree';
+import { Node } from '../src/tree/nirTree';
+import { buildExampleTree } from '../src/tree/misc/buildTree';
+import drawTree from '../src/tree/misc/drawTree';
+import { useRef } from 'react';
 
 // const tree = buildExampleTree();
 
+const useNirTreeExampleRef = () => {
+  const nirTreeRef = useRef<Node<2>>(buildExampleTree());
+  return nirTreeRef;
+};
+
 const ControlledView = () => {
+  const nirTreeRef = useNirTreeExampleRef();
   const setupListeners = () => {
     const controller = controllerRef.current;
     const render = renderRef.current;
@@ -24,9 +33,7 @@ const ControlledView = () => {
     useControllerRef(setupListeners);
   const [, renderRef, onViewControllerElementRefSet, onCanvasElementRefSet] =
     useControlledCanvasViewRef((context) => {
-      context.beginPath();
-      context.rect(20, 20, 150, 100);
-      context.stroke();
+      drawTree(context, nirTreeRef.current);
     }, setupListeners);
   return (
     <div
