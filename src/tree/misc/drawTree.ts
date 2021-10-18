@@ -9,7 +9,7 @@ const getSymbol = (i: number): string =>
     : `${getSymbol(Math.floor(i / symbols.length) - 1)}${
         symbols[i % symbols.length]
       }`;
-const scaleFactor = 10;
+export const scaleFactor = 10;
 
 const drawTree = (
   context: CanvasRenderingContext2D,
