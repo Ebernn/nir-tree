@@ -2,15 +2,13 @@ import {
   rectangleIncludesPoint,
   polygonIncludesPoint,
   rectanglesAreDisjoint,
-  rectangleVolume,
-  polygonVolume,
   polygonIntersection,
   rectangleIntersection,
   rectangleFragmentation,
   pointInPerimeter,
   rectangleInPerimeter,
   refine,
-  polygonExpand,
+  expand,
   polygonsAreDisjoint,
 } from './geometry';
 import { Point, Rectangle } from './types';
@@ -55,35 +53,6 @@ describe('Geometry', () => {
       [4, 2],
       [5, 4],
     ];
-
-    describe('properties', () => {
-      it('should deduce correclty their volume', () => {
-        expect(
-          rectangleVolume([
-            [0, 0],
-            [0, 10],
-          ])
-        ).toBe(0);
-        expect(
-          rectangleVolume([
-            [1, 3],
-            [3, 5],
-          ])
-        ).toBe(4);
-        expect(
-          rectangleVolume([
-            [0, 0, 0],
-            [10, 10, 0],
-          ])
-        ).toBe(0);
-        expect(
-          rectangleVolume([
-            [1, 3, 2],
-            [3, 5, 4],
-          ])
-        ).toBe(8);
-      });
-    });
 
     describe('inclusions', () => {
       it('should include points', () => {
@@ -184,6 +153,18 @@ describe('Geometry', () => {
       });
       it('shoud NOT be disjoint', () => {
         expect(rectanglesAreDisjoint(rectangleA, rectangleB)).toBe(false);
+        expect(
+          rectanglesAreDisjoint(
+            [
+              [9, 3],
+              [19, 5],
+            ],
+            [
+              [13, 3],
+              [16, 7],
+            ]
+          )
+        ).toBe(false);
       });
       it('should deduce correclty their intersections', () => {
         expect(rectangleIntersection(rectangleA, rectangleC)).toBeUndefined();
@@ -445,28 +426,6 @@ describe('Geometry', () => {
      *            3 4 5
      */
     const polygon2 = [rectangle2A, rectangle2B];
-
-    describe('properties', () => {
-      it('should deduce correclty their volume', () => {
-        expect(polygonVolume(polygon1)).toBe(5);
-        expect(
-          polygonVolume([
-            [
-              [2, 2, 1],
-              [3, 4, 3],
-            ],
-            [
-              [3, 2, 2],
-              [4, 3, 3],
-            ],
-            [
-              [4, 2, 1],
-              [5, 4, 1],
-            ],
-          ])
-        ).toBe(5);
-      });
-    });
 
     describe('inclusions', () => {
       it('should include points', () => {
@@ -958,7 +917,7 @@ describe('Geometry', () => {
 
     describe('expansion', () => {
       it('should expand a polygon to enclose a point minimizing additional area', () => {
-        expect(polygonExpand(polygon1, [5, 5])).toEqual([
+        expect(expand(polygon1, [5, 5])[0]).toEqual([
           rectangle1A,
           rectangle1B,
           [
@@ -966,12 +925,16 @@ describe('Geometry', () => {
             [5, 5],
           ],
         ]);
-        expect(polygonExpand(polygon1, [3.9, 4])).toEqual([
+        expect(expand(polygon1, [3.9, 4])[0]).toEqual([
           rectangle1A,
           rectangle1B,
           [
-            [3.9, 2],
+            [4, 2],
             [5, 4],
+          ],
+          [
+            [3.9, 3],
+            [4, 4],
           ],
         ]);
       });

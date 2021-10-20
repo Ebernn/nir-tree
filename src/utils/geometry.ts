@@ -1,4 +1,5 @@
 import { Point, Polygon, Rectangle } from './types';
+import metric from './metric';
 
 /**
  * Definition 4. Check whether point0 dominates point1.
@@ -129,71 +130,51 @@ export const polygonsAreDisjoint = <Dimensions extends number>(
 };
 
 /**
- * Expands a rectangle to enclose a point.
- * @param rectangle
- * @param point
- * @returns expanded rectangle containing the point
- */
-export const rectangleExpand = <Dimensions extends number>(
-  [ll, ur]: Rectangle<Dimensions>,
-  point: Point<Dimensions>
-): Rectangle<Dimensions> =>
-  [
-    ll.map((comp, axis) => (point[axis] < comp ? point[axis] : comp)),
-    ur.map((comp, axis) => (point[axis] > comp ? point[axis] : comp)),
-  ] as Rectangle<Dimensions>;
-
-/**
  * Expands a polygon to enclose a point (choosing the rectangle requiring the least additional area to enclose it).
  * @param polygon
  * @param point
- * @returns expanded polygon containing the point
+ * @returns expanded polygon containing the point, the associated metric difference
  */
-export const polygonExpand = <Dimensions extends number>(
+export const expand = <Dimensions extends number>(
   rectangles: Polygon<Dimensions>,
   point: Point<Dimensions>
-): Polygon<Dimensions> => {
-  const [minIndex, minExpandedRectangle] = rectangles.reduce(
-    ([minIndex, minExpandedRectangle, minAddVolume], rectangle, index) => {
-      const expandedRectangle = rectangleExpand(rectangle, point);
-      const addVolume =
-        rectangleVolume(expandedRectangle) - rectangleVolume(rectangle);
-      return addVolume < minAddVolume
-        ? [index, expandedRectangle, addVolume]
-        : [minIndex, minExpandedRectangle, minAddVolume];
+): [Polygon<Dimensions>, number] => {
+  const [minIndex, minExpandedRectangle, minDiff] = rectangles.reduce(
+    ([minIndex, minExpandedRectangle, minDiff], [ll, ur], index) => {
+      const expandedRectangle: Rectangle<Dimensions> = [
+        ll.map((comp, axis) => (point[axis] < comp ? point[axis] : comp)),
+        ur.map((comp, axis) => (point[axis] > comp ? point[axis] : comp)),
+      ] as Rectangle<Dimensions>;
+      const diff = metric(expandedRectangle) - metric([ll, ur]);
+      return diff < minDiff
+        ? [index, expandedRectangle, diff]
+        : [minIndex, minExpandedRectangle, minDiff];
     },
     [-1, rectangles[0], Number.POSITIVE_INFINITY]
   );
   if (minIndex < 0) throw new Error('Could not expand empty polygons.');
-  return rectangles.map((rectangle, index) =>
-    index === minIndex ? minExpandedRectangle : rectangle
+  // make sure that after expansion, all rectangles are remain disjoint
+  const nonDisjointRectangles = rectangles.filter(
+    (rectangle, index) =>
+      !rectanglesAreDisjoint(rectangle, minExpandedRectangle) &&
+      index !== minIndex
   );
+  // TODO : improve this part
+  if (nonDisjointRectangles.length === 0)
+    return [
+      rectangles.map((rectangle, index) =>
+        index === minIndex ? minExpandedRectangle : rectangle
+      ),
+      minDiff,
+    ];
+  return [
+    refine([
+      ...rectangles.filter((_, index) => index !== minIndex),
+      ...polygonFragmentation([minExpandedRectangle], nonDisjointRectangles),
+    ]),
+    minDiff,
+  ];
 };
-
-/**
- * Returns a rectangle volume.
- * @param rectangle
- * @returns {number} volume
- */
-export const rectangleVolume = <Dimensions extends number>([
-  ll,
-  ur,
-]: Rectangle<Dimensions>): number =>
-  ur
-    .map((comp, axis) => comp - ll[axis])
-    .reduce((accVolume, curVolume) => accVolume * curVolume);
-
-/**
- * Returns a polygon volume.
- * @param rectangle
- * @returns {number} volume
- */
-export const polygonVolume = <Dimensions extends number>(
-  rectangles: Polygon<Dimensions>
-): number =>
-  rectangles
-    .map((rectangle) => rectangleVolume(rectangle))
-    .reduce((accVolume, curVolume) => accVolume + curVolume);
 
 /**
  * Definition 9. Returns the intersection of two rectangles.

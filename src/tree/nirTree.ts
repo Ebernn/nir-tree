@@ -1,10 +1,9 @@
 import {
-  polygonExpand,
+  expand,
   polygonFragmentation,
   polygonIncludesPoint,
   polygonIntersection,
   polygonsAreDisjoint,
-  polygonVolume,
   refine,
 } from '../utils/geometry';
 import { Point, Polygon } from '../utils/types';
@@ -72,13 +71,11 @@ export const chooseLeaf = <Dimensions extends number>(
       // find and expand the best polygon, minimizing additional area to enclose the point
       // eslint-disable-next-line prefer-const
       let [minIndex, minExpandedPolygon] = branches.reduce(
-        ([minIndex, minExpandedPolygon, minAddVolume], branch, index) => {
-          const expandedPolygon = polygonExpand(branch.polygon, point);
-          const addVolume =
-            polygonVolume(expandedPolygon) - polygonVolume(branch.polygon);
-          return addVolume < minAddVolume
-            ? [index, expandedPolygon, addVolume]
-            : [minIndex, minExpandedPolygon, minAddVolume];
+        ([minIndex, minExpandedPolygon, minDiff], branch, index) => {
+          const [expandedPolygon, diff] = expand(branch.polygon, point);
+          return diff < minDiff
+            ? [index, expandedPolygon, diff]
+            : [minIndex, minExpandedPolygon, minDiff];
         },
         [-1, branches[0].polygon, Number.POSITIVE_INFINITY]
       );
