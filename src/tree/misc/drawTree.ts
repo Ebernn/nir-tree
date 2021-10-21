@@ -16,25 +16,36 @@ const drawTree = (
   node: Node<2>,
   i = 0
 ): void => {
+  context.save();
+  if (i === 0) {
+    context.scale(scaleFactor, scaleFactor);
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = '0.5px Arial';
+  }
   if (!isLeaf(node)) {
-    context.save();
-    if (i === 0) {
-      context.scale(scaleFactor, scaleFactor);
-      context.textAlign = 'center';
-      context.textBaseline = 'middle';
-      context.font = '0.5px Arial';
-      context.lineWidth = 0.5 / scaleFactor;
-    }
-    node.branches.forEach(({ polygon }) => {
+    context.lineWidth = 0.5 / scaleFactor;
+    node.branches.forEach(({ polygon, child }) => {
       const h = (360 / symbols.length) * ((383 * i) % symbols.length);
       context.fillStyle = hslToHex(h, 100, 50);
       context.strokeStyle = hslToHex(h, 100, 25);
       drawPolygon(context, polygon, getSymbol(i));
+      if (isLeaf(child)) {
+        child.points.forEach(([x, y]) => {
+          y *= -1;
+          context.beginPath();
+          context.arc(x, y, 0.1, 0, 2 * Math.PI);
+          context.fill();
+          context.stroke();
+        });
+      }
       i++;
     });
-    node.branches.forEach(({ child }) => drawTree(context, child, i));
-    context.restore();
+    node.branches.forEach(({ child }) => {
+      drawTree(context, child, i);
+    });
   }
+  context.restore();
 };
 
 const drawPolygon = (

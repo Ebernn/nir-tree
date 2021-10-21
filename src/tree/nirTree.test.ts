@@ -1,5 +1,5 @@
-import { chooseLeaf, getNodePolygon } from './nirTree';
-import { buildExampleTree } from './misc/buildTree';
+import { chooseLeaf, getNodePolygon, splitNode } from './nirTree';
+import { buildExampleTree, retreiveTemplate } from './misc/buildTree';
 
 describe('Tree', () => {
   /**
@@ -17,11 +17,12 @@ describe('Tree', () => {
    *      + - - - - - - - - - - - - - - - - -
    *        1   3 4 5 6 7 8 9 10    13    16
    */
-  const tree = buildExampleTree();
+  const treeA = buildExampleTree();
+  const treeB = buildExampleTree();
 
   describe('Algorithm 1. choose leaf', () => {
     it('should choose the correct leaf, expand, fragment and refine properly', () => {
-      expect(getNodePolygon(chooseLeaf(tree, [10, 7]))).toEqual([
+      expect(getNodePolygon(chooseLeaf(treeA, [10, 7]))).toEqual([
         [
           [9, 5],
           [10, 7],
@@ -35,7 +36,7 @@ describe('Tree', () => {
           [8, 7],
         ],
       ]);
-      expect(getNodePolygon(chooseLeaf(tree, [10, 2]))).toEqual([
+      expect(getNodePolygon(chooseLeaf(treeA, [10, 2]))).toEqual([
         [
           [1, 3],
           [4, 7],
@@ -45,7 +46,7 @@ describe('Tree', () => {
           [10, 3],
         ],
       ]);
-      expect(getNodePolygon(chooseLeaf(tree, [1, 8]))).toEqual([
+      expect(getNodePolygon(chooseLeaf(treeA, [1, 8]))).toEqual([
         [
           [1, 3],
           [4, 8],
@@ -55,7 +56,7 @@ describe('Tree', () => {
           [10, 3],
         ],
       ]);
-      expect(getNodePolygon(chooseLeaf(tree, [11, 5.5]))).toEqual([
+      expect(getNodePolygon(chooseLeaf(treeA, [11, 5.5]))).toEqual([
         [
           [9, 3],
           [10, 5],
@@ -70,5 +71,43 @@ describe('Tree', () => {
         ],
       ]);
     });
+  });
+
+  describe('Algorithm 3. split node', () => {
+    // TODO : implement the test
+    expect({
+      parent: undefined,
+      branches: [
+        {
+          points: [[1, 2]],
+          polygon: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+      ],
+    }).toEqual({
+      parent: undefined,
+      branches: [
+        {
+          points: [[1, 2]],
+          polygon: [
+            [1, 2],
+            [3, 4],
+          ],
+        },
+      ],
+    });
+    console.log(
+      JSON.stringify(
+        retreiveTemplate({
+          parent: undefined,
+          branches: splitNode(treeB, 7, 0),
+        }),
+        null,
+        2
+      )
+    );
+    // expect(splitNode(buildExampleTree(), 7, 0));
   });
 });

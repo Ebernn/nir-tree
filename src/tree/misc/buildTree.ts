@@ -1,5 +1,5 @@
 import { Point, Polygon } from '../../utils/types';
-import { Node, RoutingNode } from '../nirTree';
+import { isLeaf, Node, RoutingNode } from '../nirTree';
 
 export type LeafNodeTemplate<Dimensions extends number> = {
   points: Point<Dimensions>[];
@@ -20,7 +20,7 @@ const isLeafTemplate = <Dimensions extends number>(
  * @param template NIR-tree template
  * @returns NIR-tree root node
  */
-const buildTree = <Dimensions extends number>(
+export const buildTree = <Dimensions extends number>(
   template: NodeTemplate<Dimensions>
 ): Node<Dimensions> => {
   if (isLeafTemplate(template))
@@ -37,6 +37,23 @@ const buildTree = <Dimensions extends number>(
     return routingNode;
   }
 };
+
+/**
+ * Utility function to help retreiving a NIR-tree template from its root.
+ * @param node NIR-tree root
+ * @returns NIR-tree template
+ */
+export const retreiveTemplate = <Dimensions extends number>(
+  node: Node<Dimensions>
+): NodeTemplate<Dimensions> =>
+  isLeaf(node)
+    ? { points: node.points }
+    : {
+        branches: node.branches.map(({ child, polygon }) => ({
+          child: { ...retreiveTemplate(child) },
+          polygon,
+        })),
+      };
 
 /**
  *  Utility function to help building the example tree (figure 4).
@@ -61,7 +78,11 @@ export const buildExampleTree = (): Node<2> =>
       // A
       {
         child: {
-          points: [],
+          points: [
+            [3, 7],
+            [1, 1],
+            [9, 3],
+          ],
         },
         polygon: [
           // A1
@@ -83,7 +104,10 @@ export const buildExampleTree = (): Node<2> =>
             // D
             {
               child: {
-                points: [],
+                points: [
+                  [4, 7],
+                  [6, 9],
+                ],
               },
               polygon: [
                 [
@@ -95,7 +119,7 @@ export const buildExampleTree = (): Node<2> =>
             // E
             {
               child: {
-                points: [],
+                points: [[7, 6.5]],
               },
               polygon: [
                 [
@@ -107,7 +131,11 @@ export const buildExampleTree = (): Node<2> =>
             // F
             {
               child: {
-                points: [],
+                points: [
+                  [5, 6],
+                  [7, 4],
+                  [8.5, 5],
+                ],
               },
               polygon: [
                 // F1
@@ -139,7 +167,10 @@ export const buildExampleTree = (): Node<2> =>
       // C
       {
         child: {
-          points: [],
+          points: [
+            [10, 4],
+            [16, 7],
+          ],
         },
         polygon: [
           // C1

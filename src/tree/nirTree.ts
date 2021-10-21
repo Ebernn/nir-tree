@@ -6,7 +6,7 @@ import {
   polygonsAreDisjoint,
   refine,
 } from '../utils/geometry';
-import { Point, Polygon } from '../utils/types';
+import { Point, Polygon, Rectangle } from '../utils/types';
 
 // Definitions
 
@@ -103,4 +103,167 @@ export const chooseLeaf = <Dimensions extends number>(
     }
   }
   return leaf;
+};
+
+/**
+ * Algorithm 3. Divides a node along l on dimension d.
+ * @param node
+ * @param l
+ * @param d
+ * @returns two branches
+ */
+export const splitNode = <Dimensions extends number>(
+  node: Node<Dimensions>,
+  l: number,
+  d: number
+): [Branch<Dimensions>, Branch<Dimensions>] => {
+  const leaf = isLeaf(node);
+  const parent = node.parent;
+  const polygon = parent ? getNodePolygon(parent) : undefined;
+  /**
+   * Find the smallest rectangle enclosing all the points.
+   * @param points
+   * @returns smallest rectangle enclosing all the points
+   */
+  const smallest = (points: Point<Dimensions>[]): Rectangle<Dimensions> =>
+    points.reduce(
+      ([ll, ur], point): Rectangle<Dimensions> => [
+        ll.map((comp, axis) =>
+          Math.min(comp, point[axis])
+        ) as Point<Dimensions>,
+        ur.map((comp, axis) =>
+          Math.max(comp, point[axis])
+        ) as Point<Dimensions>,
+      ],
+      [points[0], points[0]]
+    );
+  // find Pref
+  const pRef: Polygon<Dimensions> = polygon
+    ? polygon
+    : [
+        leaf
+          ? // smallest rectangle enclosing all points
+            smallest((node as LeafNode<Dimensions>).points)
+          : // smallest rectangle enclosing all polygons
+            smallest(
+              (node as RoutingNode<Dimensions>).branches
+                .map(({ polygon }) => polygon)
+                .flat(2)
+            ),
+      ];
+  // let's slice Pref along l in dimension d
+  const [pL, pR] = pRef.reduce(
+    (
+      [pL, pR]: [Polygon<Dimensions>, Polygon<Dimensions>],
+      [ll, ur]
+    ): [Polygon<Dimensions>, Polygon<Dimensions>] => {
+      const dL = ll[d] - l;
+      const dR = ur[d] - l;
+      if (dL > 0 && dR > 0) {
+        pR.push([ll, ur]);
+        return [pL, pR];
+      }
+      if (dL < 0 && dR < 0) {
+        pL.push([ll, ur]);
+        return [pL, pR];
+      }
+      pL.push([
+        ll,
+        ur.map((comp, axis) => (axis === d ? l : comp)),
+      ] as Rectangle<Dimensions>);
+      pR.push([
+        ll.map((comp, axis) => (axis === d ? l : comp)),
+        ur,
+      ] as Rectangle<Dimensions>);
+      return [pL, pR];
+    },
+    [[], []] as [Polygon<Dimensions>, Polygon<Dimensions>]
+  );
+  const [bL, bR] = leaf
+    ? // iterate over the points if node is a leaf
+      (node as LeafNode<Dimensions>).points.reduce(
+        ([bL, bR], point) => {
+          const iL = polygonIncludesPoint(pL, point);
+          const iR = polygonIncludesPoint(pR, point);
+          if (iL && iR) {
+            (bL.child.points.length > bR.child.points.length
+              ? bR.child.points
+              : bL.child.points
+            ).push(point);
+          } else if (iL) {
+            bL.child.points.push(point);
+          } else if (iR) {
+            bR.child.points.push(point);
+          }
+          return [bL, bR];
+        },
+        [
+          {
+            child: { points: [] as Point<Dimensions>[], parent },
+            polygon: pL,
+          },
+          {
+            child: { points: [] as Point<Dimensions>[], parent },
+            polygon: pR,
+          },
+        ] as [
+          {
+            child: LeafNode<Dimensions>;
+            polygon: Polygon<Dimensions>;
+          },
+          {
+            child: LeafNode<Dimensions>;
+            polygon: Polygon<Dimensions>;
+          }
+        ]
+      )
+    : // otherwise, iterate over the branches
+      (node as RoutingNode<Dimensions>).branches.reduce(
+        ([bL, bR], branch) => {
+          if (polygonIntersection(branch.polygon, pL).length === 0) {
+            bR.child.branches.push(branch);
+            branch.child.parent = bR.child;
+          } else if (polygonIntersection(branch.polygon, pR).length === 0) {
+            bL.child.branches.push(branch);
+            branch.child.parent = bL.child;
+          } else {
+            const [newBL, newBR] = splitNode(branch.child, l, d);
+            bL.child.branches.push(newBL);
+            newBL.child.parent = bL.child;
+            bR.child.branches.push(newBR);
+            newBR.child.parent = bR.child;
+          }
+          return [bL, bR];
+        },
+        [
+          {
+            child: { branches: [] as Branch<Dimensions>[], parent },
+            polygon: pL,
+          },
+          {
+            child: { branches: [] as Branch<Dimensions>[], parent },
+            polygon: pR,
+          },
+        ] as [
+          {
+            child: RoutingNode<Dimensions>;
+            polygon: Polygon<Dimensions>;
+          },
+          {
+            child: RoutingNode<Dimensions>;
+            polygon: Polygon<Dimensions>;
+          }
+        ]
+      );
+  // refine the polygons
+  return [
+    {
+      child: bL.child,
+      polygon: refine(bL.polygon),
+    },
+    {
+      child: bR.child,
+      polygon: refine(bR.polygon),
+    },
+  ];
 };

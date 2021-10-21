@@ -1,41 +1,11 @@
 import type { NextPage } from 'next';
 import styles from '../styles/Home.module.css';
-import useControllerRef from '../hooks/viewport/useControllerRef';
 import useControlledCanvasViewRef from '../hooks/viewport/useControlledCanvasViewRef';
-import { chooseLeaf, Node } from '../src/tree/nirTree';
+import useExample2 from '../hooks/examples/useExample2';
+import { Node } from '../src/tree/nirTree';
 import { buildExampleTree } from '../src/tree/misc/buildTree';
-import drawTree, { scaleFactor } from '../src/tree/misc/drawTree';
-import { MutableRefObject, useRef } from 'react';
-import { View } from '../src/viewport/view/view';
-
-/**
- * Example 1. Move the cursor around, see which polygons should expand.
- * @param nirTreeRef
- * @param viewRef
- * @param renderRef
- * @returns
- */
-const useExample1 = (
-  nirTreeRef: MutableRefObject<Node<2>>,
-  viewRef: MutableRefObject<View>,
-  renderRef: MutableRefObject<(() => void) | undefined>
-) => {
-  const [, onTreeControllerElementRefSet] = useControllerRef((controller) => {
-    const onDocMouseMove = (e: MouseEvent) => {
-      let { x, y } = viewRef.current.mousePosToViewPos(e.clientX, e.clientY);
-      x /= scaleFactor;
-      y /= -scaleFactor;
-      nirTreeRef.current = buildExampleTree();
-      chooseLeaf(nirTreeRef.current, [x, y]);
-      if (renderRef.current) renderRef.current();
-    };
-    controller.on('docmousemove', onDocMouseMove);
-    return () => {
-      controller.off('docmousemove', onDocMouseMove);
-    };
-  });
-  return [onTreeControllerElementRefSet];
-};
+import drawTree from '../src/tree/misc/drawTree';
+import { useRef } from 'react';
 
 const ControlledView = () => {
   const nirTreeRef = useRef<Node<2>>(buildExampleTree());
@@ -47,7 +17,7 @@ const ControlledView = () => {
   ] = useControlledCanvasViewRef((context) => {
     drawTree(context, nirTreeRef.current);
   });
-  const [onTreeControllerElementRefSet] = useExample1(
+  const [onTreeControllerElementRefSet] = useExample2(
     nirTreeRef,
     viewRef,
     renderRef
