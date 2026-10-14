@@ -1,4 +1,4 @@
-# NIR-Tree
+# 🌳 NIR-Tree
 
 ![demo](assets/demo.gif)
 
