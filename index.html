@@ -31,8 +31,12 @@
   <body>
     <canvas></canvas>
     <div id="ui">
-      <b>NIR-Tree</b> · Figure 4 of the paper<br />
-      Move: preview insertion (Algorithm 1) · Hold shift: preview split (Algorithm 3)
+      <b>NIR-Tree</b><br />
+      click: insert · drag: range query · hover: point query · right-click: remove<br />
+      <button id="cluster">Add 100 points</button>
+      <button id="clear">Clear</button>
+      <label>Fanout <input id="fanout" type="range" min="2" max="16" value="4" /></label>
+      <div id="stats"></div>
     </div>
     <script type="module" src="/src/demo.ts"></script>
   </body>
