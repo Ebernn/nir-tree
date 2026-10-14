@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NIR-Tree</title>
+    <link rel="icon" href="data:," />
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #111;
+        color: #ddd;
+        font: 13px/1.6 system-ui;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+      #ui {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #000b;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas></canvas>
+    <div id="ui">
+      <b>NIR-Tree</b> · Figure 4 of the paper<br />
+      Move: preview insertion (Algorithm 1) · Hold shift: preview split (Algorithm 3)
+    </div>
+    <script type="module" src="/src/demo.ts"></script>
+  </body>
+</html>

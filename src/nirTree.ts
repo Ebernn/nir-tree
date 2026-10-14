@@ -1,0 +1,138 @@
+// NIR-Tree: A Non-Intersecting R-Tree (Langendoen, Glasbergen & Daudjee, SSDBM 2021)
+
+export type Point = number[]; // Definition 3
+export type Rect = [ll: Point, ur: Point]; // Definition 5
+export type Polygon = Rect[]; // Definition 7
+/** A node with its bounding polygon: leaves have no children, routing nodes have no points. */
+export type Node = { poly: Polygon; parent?: Node; children: Node[]; points: Point[] };
+
+// Geometry (Section 4)
+
+/** Definition 6 */
+export const contains = ([ll, ur]: Rect, p: Point) => p.every((x, d) => ll[d] <= x && x <= ur[d]);
+
+/** Definition 8 */
+export const polyContains = (poly: Polygon, p: Point) => poly.some((r) => contains(r, p));
+
+/** Definition 9 */
+export const intersect = ([ll1, ur1]: Rect, [ll2, ur2]: Rect): Rect | undefined => {
+  const ll = ll1.map((x, d) => Math.max(x, ll2[d]));
+  const ur = ur1.map((x, d) => Math.min(x, ur2[d]));
+  return ll.every((x, d) => x <= ur[d]) ? [ll, ur] : undefined;
+};
+
+/** Definition 11 */
+export const intersectPoly = (P: Polygon, Q: Polygon) =>
+  P.flatMap((r) => Q.map((s) => intersect(r, s)).filter((r) => r !== undefined));
+
+/** Definition 12: rectangles are disjoint when they share at most (part of) their perimeter. */
+export const disjoint = ([ll1, ur1]: Rect, [ll2, ur2]: Rect) =>
+  ll1.some((_, d) => ur1[d] <= ll2[d] || ur2[d] <= ll1[d]);
+
+/** Definition 14: the fragments of r outside of s, one floor and one ceiling per dimension. */
+export const fragment = (r: Rect, s: Rect): Polygon => {
+  if (disjoint(r, s)) return [r];
+  let [ll, ur] = r;
+  const fragments: Polygon = [];
+  for (let d = 0; d < ll.length; d++) {
+    if (ll[d] < s[0][d]) fragments.push([ll, ur.with(d, s[0][d])]);
+    if (s[1][d] < ur[d]) fragments.push([ll.with(d, s[1][d]), ur]);
+    [ll, ur] = [ll.with(d, Math.max(ll[d], s[0][d])), ur.with(d, Math.min(ur[d], s[1][d]))];
+  }
+  return fragments;
+};
+
+/** Definition 15, one rectangle of Q after the other (Section 3.2.1). */
+export const fragmentPoly = (P: Polygon, Q: Polygon) =>
+  Q.reduce((P, s) => P.flatMap((r) => fragment(r, s)), P);
+
+const encloses = (r: Rect, s: Rect) => contains(r, s[0]) && contains(r, s[1]);
+
+const bbox = (rects: Rect[]): Rect => [
+  rects[0][0].map((_, d) => Math.min(...rects.map((r) => r[0][d]))),
+  rects[0][1].map((_, d) => Math.max(...rects.map((r) => r[1][d]))),
+];
+
+/** Figure 6: drop rectangles enclosed by another one (a, b), merge rows and columns (c). */
+export const refine = (poly: Polygon): Polygon => {
+  poly = poly.filter(
+    (r, i) => !poly.some((s, j) => j !== i && encloses(s, r) && (j < i || !encloses(r, s))),
+  );
+  for (const [i, r] of poly.entries())
+    for (const s of poly.slice(i + 1))
+      if (intersect(r, s) && r[0].filter((x, d) => x !== s[0][d] || r[1][d] !== s[1][d]).length < 2)
+        return refine([bbox([r, s]), ...poly.filter((t) => t !== r && t !== s)]);
+  return poly;
+};
+
+// Tree (Section 3)
+
+const volume = ([ll, ur]: Rect) => ll.reduce((v, x, d) => v * (ur[d] - x), 1);
+const margin = ([ll, ur]: Rect) => ll.reduce((v, x, d) => v + ur[d] - x, 0);
+const size = (node: Node) => node.points.length + node.children.length;
+
+/** Algorithm 1: descend to a leaf, expanding, fragmenting and refining polygons on the way. */
+export const chooseLeaf = (root: Node, p: Point): Node => {
+  let node = root;
+  while (node.children.length) {
+    let next = node.children.find((c) => polyContains(c.poly, p));
+    if (!next) {
+      // expand the rectangle needing the least additional area (then margin, for flat rectangles)
+      const { child, rect, expanded } = node.children
+        .flatMap((child) =>
+          child.poly.map((rect) => {
+            const expanded = bbox([rect, [p, p]]);
+            const cost = [volume(expanded) - volume(rect), margin(expanded) - margin(rect)];
+            return { child, rect, expanded, cost };
+          }),
+        )
+        .reduce((a, b) => ((b.cost[0] - a.cost[0] || b.cost[1] - a.cost[1]) < 0 ? b : a));
+      const siblings = node.children.flatMap((s) => (s === child ? [] : s.poly));
+      const others = child.poly.flatMap((r) => (r === rect ? [] : fragment(r, expanded)));
+      const poly = fragmentPoly([expanded, ...others], siblings);
+      child.poly = refine(node.parent ? intersectPoly(poly, node.poly) : poly);
+      next = child;
+    }
+    node = next;
+  }
+  return node;
+};
+
+/** Extent of a point or of a node polygon along dimension d. */
+const extent = (item: Point | Node, d: number) =>
+  Array.isArray(item)
+    ? [item[d], item[d]]
+    : [Math.min(...item.poly.map((r) => r[0][d])), Math.max(...item.poly.map((r) => r[1][d]))];
+
+/** Algorithm 3: split a node along x[d] = l, recursively splitting the children crossing it. */
+export const splitNode = (node: Node, l: number, d: number): [Node, Node] => {
+  const ref = node.parent
+    ? node.poly
+    : [bbox([...node.points.map((p): Rect => [p, p]), ...node.children.flatMap((c) => c.poly)])];
+  const half = (lo: number, hi: number): Node => ({
+    poly: refine(
+      ref
+        .filter(([ll, ur]) => ll[d] <= hi && lo <= ur[d])
+        .map(([ll, ur]): Rect => [
+          ll.with(d, Math.max(ll[d], lo)),
+          ur.with(d, Math.min(ur[d], hi)),
+        ]),
+    ),
+    parent: node.parent,
+    children: [],
+    points: [],
+  });
+  const halves: [Node, Node] = [half(-Infinity, l), half(l, Infinity)];
+  const add = (half: Node, item: Point | Node) => {
+    if (Array.isArray(item)) half.points.push(item);
+    else if (size(item)) half.children.push(Object.assign(item, { parent: half }));
+  };
+  for (const item of [...node.points, ...node.children]) {
+    const [lo, hi] = extent(item, d);
+    // items crossing the line are split, items lying on it go to the smallest half
+    if (lo < l && l < hi) splitNode(item as Node, l, d).forEach((h, i) => add(halves[i], h));
+    else if (lo < l || (hi === l && size(halves[0]) <= size(halves[1]))) add(halves[0], item);
+    else add(halves[1], item);
+  }
+  return halves;
+};
